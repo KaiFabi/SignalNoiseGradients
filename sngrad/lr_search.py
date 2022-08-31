@@ -17,7 +17,6 @@ def learning_rate_search(
     lr_max: float,
     num_steps: int,
     num_epochs: int,
-    comment: str = ""
     ) -> float:
     """Searches for best learning rate within a defined interval.
 
@@ -37,7 +36,7 @@ def learning_rate_search(
     num_targets = hparams["num_targets"]
     learning_rates = np.array(jnp.geomspace(start=lr_min, stop=lr_max, num=num_steps))
 
-    writer = SummaryWriter(comment=comment)
+    writer = SummaryWriter(comment=f"_lr_search_{hparams['optimizer']}")
 
     file = open(f"{hparams['optimizer']}_lr_search.txt", "a")
 
