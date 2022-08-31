@@ -25,9 +25,9 @@ def run_experiment(optimizer: str):
 
     hparams = {
         "dataset_name": "fashion_mnist",
-        "layer_sizes": [784, 32, 32, 10],
+        "layer_sizes": [784, 512, 512, 512, 10],
         "step_size": -1,
-        "num_epochs": 20,
+        "num_epochs": 500,
         "batch_size": 512,
         "num_targets": 10,
         "num_workers": 4,
@@ -44,12 +44,12 @@ def run_experiment(optimizer: str):
     if hparams["step_size"] == -1:
         best_lr = learning_rate_search(
             hparams=hparams,
-            lr_min=1e-3,
+            lr_min=1e-4,
             lr_max=1e-0,
-            num_steps=5, 
-            num_epochs=1, 
+            num_steps=50, 
+            num_epochs=5, 
             )
-        print(f"{best_lr = }")
+        print(f"best_lr = {best_lr}")
         hparams["step_size"] = best_lr
 
     # Parameters
