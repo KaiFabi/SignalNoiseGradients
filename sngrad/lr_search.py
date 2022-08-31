@@ -86,7 +86,7 @@ def learning_rate_search(
     writer.close()
     file.close()
 
-    idx_best_lr = np.argmin(hist_test_loss)
+    idx_best_lr = np.nanargmin(hist_test_loss)
     best_lr = learning_rates[idx_best_lr]
 
     return best_lr
