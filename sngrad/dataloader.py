@@ -65,7 +65,7 @@ class DataServer:
 
     def __init__(self, hparams: dict) -> None:
 
-        dataset = hparams["dataset_name"]
+        dataset = hparams["dataset"]
         self.batch_size =  hparams["batch_size"]
         self.num_targets = hparams["num_targets"]
         self.num_workers = hparams["num_workers"]

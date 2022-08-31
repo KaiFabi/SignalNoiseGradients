@@ -7,6 +7,7 @@ Consider this implementation as a proof of concept.
 Some basic parts of the dataloader and network of this code are from the following JAX tutorial:
 https://jax.readthedocs.io/en/latest/notebooks/Neural_Network_and_Data_Loading.html
 """
+import os
 import time
 import numpy as np
 
@@ -26,7 +27,8 @@ def run_experiment(optimizer: str):
     set_random_seeds(seed=69)
 
     hparams = {
-        "dataset_name": "fashion_mnist",
+        # dataset options: mnist, fashion_mnist, cifar10
+        "dataset": "fashion_mnist",
         "layer_sizes": [784, 512, 512, 512, 10],
         "step_size": -1,
         "num_epochs": 100,
@@ -88,6 +90,8 @@ def run_experiment(optimizer: str):
             message = f"{epoch} {epoch_time:0.2f} {train_loss} {test_loss} {train_accuracy} {test_accuracy}"
             print(message)
             file.write(f"{message}\n")
+            file.flush()
+            os.fsync()
 
         writer.add_scalar("Epoch_time", epoch_time, epoch)
         writer.add_scalar("Accuracy/train", np.array(train_accuracy), epoch)
