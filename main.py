@@ -7,7 +7,6 @@ Consider this implementation as a proof of concept.
 Some basic parts of the dataloader and network of this code are from the following JAX tutorial:
 https://jax.readthedocs.io/en/latest/notebooks/Neural_Network_and_Data_Loading.html
 """
-import os
 import time
 import numpy as np
 
@@ -32,7 +31,7 @@ def run_experiment(optimizer: str):
         "layer_sizes": [784, 512, 512, 512, 10],
         "step_size": -1,
         "num_epochs": 100,
-        "batch_size": 512,
+        "batch_size": 256,
         "num_targets": 10,
         "num_workers": 4,
         "stats_every_num_epochs": 5,
@@ -91,7 +90,6 @@ def run_experiment(optimizer: str):
             print(message)
             file.write(f"{message}\n")
             file.flush()
-            os.fsync()
 
         writer.add_scalar("Epoch_time", epoch_time, epoch)
         writer.add_scalar("Accuracy/train", np.array(train_accuracy), epoch)

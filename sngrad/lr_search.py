@@ -1,5 +1,4 @@
 """Simple learning rate search."""
-import os
 import time
 import numpy as np
 
@@ -83,7 +82,6 @@ def learning_rate_search(
         print(message)
         file.write(f"{message}\n")
         file.flush()
-        os.fsync()
 
     writer.close()
     file.close()
