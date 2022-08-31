@@ -96,6 +96,10 @@ Efficient low-level implementations of *sngrad* in popular autograd engines shou
 Of course, the method has to be applied to more advanced optimizers, larger networks, and more challenging datasets to make better statements about its potential.
 
 
+## Acknowledgements
+
+I used [this](https://jax.readthedocs.io/en/latest/notebooks/Neural_Network_and_Data_Loading.html) tutorial to get started in building basic neural networks with JAX while developing *sngrad*. 
+
 ## TODOs
 
 - Consider gradient clipping.
@@ -116,6 +120,7 @@ journal = {GitHub repository},
 howpublished={\url{https://github.com/KaiFabi/signal-to-noise-gradients}},
 }
 ```
+
 
 ## License
 

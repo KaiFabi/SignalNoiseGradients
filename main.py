@@ -4,7 +4,7 @@ Very basic implementation of signal-to-noise gradients.
 Implementation of sngrads is far from optimized.
 Consider this implementation as a proof of concept.
 
-The basic parts of this code are from the following JAX tutorial:
+Some basic parts of the dataloader and network of this code are from the following JAX tutorial:
 https://jax.readthedocs.io/en/latest/notebooks/Neural_Network_and_Data_Loading.html
 """
 import time
@@ -19,7 +19,9 @@ from sngrad.model import Model
 from sngrad.lr_search import learning_rate_search
 
 
-if __name__ == "__main__":
+def run_experiment(optimizer: str):
+    """Method runs experiments to compare standard gradients
+    with signal-to-noise gradients."""
 
     hparams = {
         "dataset_name": "fashion_mnist",
@@ -30,7 +32,7 @@ if __name__ == "__main__":
         "num_targets": 10,
         "num_workers": 4,
         "stats_every_num_epochs": 5,
-        "optimizer": "sng",     # options: sgd, sng
+        "optimizer": optimizer,     # options: sgd, sng
         "device": "gpu",        # options: gpu, cpu
     }
 
@@ -62,7 +64,7 @@ if __name__ == "__main__":
     train_images, train_labels, test_images, test_labels = data_server.get_dataset()
 
     model = Model(hparams=hparams)
-    writer = SummaryWriter(comment=f"_{hparams['optimizer']}")
+    writer = SummaryWriter(comment=f"_training_{hparams['optimizer']}")
 
     for epoch in range(num_epochs):
 
@@ -91,3 +93,11 @@ if __name__ == "__main__":
 
     writer.close()
     file.close()
+
+
+if __name__ == "__main__":
+
+    optimizers = ("sgd", "sng")
+
+    for optimizer in optimizers:
+        run_experiment(optimizer=optimizer)
