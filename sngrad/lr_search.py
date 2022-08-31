@@ -29,7 +29,7 @@ def learning_rate_search(
         comment: Option comment for Tensorboard files.
 
     Returns:
-        Best learning rate.
+        Returns learning rate associated with lowest test loss.
     """
 
     # Parameters

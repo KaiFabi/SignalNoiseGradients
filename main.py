@@ -50,7 +50,7 @@ def run_experiment(optimizer: str):
         best_lr = learning_rate_search(
             hparams=hparams,
             lr_min=1e-3,
-            lr_max=1e+1,
+            lr_max=2e+0,
             num_steps=100, 
             num_epochs=1, 
             )
