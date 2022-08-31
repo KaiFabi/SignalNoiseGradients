@@ -25,7 +25,7 @@ if __name__ == "__main__":
         "dataset_name": "fashion_mnist",
         "layer_sizes": [784, 32, 32, 10],
         "step_size": -1,
-        "num_epochs": 10,
+        "num_epochs": 20,
         "batch_size": 512,
         "num_targets": 10,
         "num_workers": 4,
@@ -44,7 +44,7 @@ if __name__ == "__main__":
             hparams=hparams,
             lr_min=1e-3,
             lr_max=1e-0,
-            num_steps=10, 
+            num_steps=5, 
             num_epochs=1, 
             )
         print(f"{best_lr = }")
@@ -79,9 +79,9 @@ if __name__ == "__main__":
             test_accuracy = model.accuracy(test_images, test_labels)
             train_loss = model.loss(train_images, train_labels)
             test_loss = model.loss(test_images, test_labels)
-            message = f"{epoch} {epoch_time:0.2f} {train_loss} {test_loss} {train_accuracy} {test_accuracy}\r"
-            print(message, end="\r")
-            file.write(message)
+            message = f"{epoch} {epoch_time:0.2f} {train_loss} {test_loss} {train_accuracy} {test_accuracy}"
+            print(message)
+            file.write(f"{message}\n")
 
         writer.add_scalar("Epoch_time", epoch_time, epoch)
         writer.add_scalar("Accuracy/train", np.array(train_accuracy), epoch)

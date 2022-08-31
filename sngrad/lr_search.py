@@ -80,7 +80,7 @@ def learning_rate_search(
 
         message = f"{train_time:0.2f} {learning_rate} {train_loss} {test_loss} {train_accuracy} {test_accuracy}"
         print(message)
-        file.write(message)
+        file.write(f"{message}\n")
 
     writer.close()
     file.close()

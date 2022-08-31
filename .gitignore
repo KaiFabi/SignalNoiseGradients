@@ -144,3 +144,6 @@ dmypy.json
 
 # Tensorboard
 **/runs/**
+
+# Text files
+*.txt
