@@ -51,8 +51,8 @@ def run_experiment(optimizer: str):
             hparams=hparams,
             lr_min=1e-3,
             lr_max=2e+0,
-            num_steps=100, 
-            num_epochs=1, 
+            num_steps=40, 
+            num_epochs=10, 
             )
         print(f"best_lr = {best_lr}")
         hparams["step_size"] = best_lr
