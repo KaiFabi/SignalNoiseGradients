@@ -102,6 +102,7 @@ I used [this](https://jax.readthedocs.io/en/latest/notebooks/Neural_Network_and_
 
 ## TODOs
 
+- jit wherever possible.
 - Consider gradient clipping.
 - According to Wikipedia, $\mu / \sigma$ is just an approximation and only valid for non-negative variables. Alternatively one can use $\mu^2 / \sigma^2$ as an adaptive multiplier leading to $\frac{\mu^2}{\sigma^2}\mu = \frac{\mu^3}{\sigma^2}$ as final gradients? https://en.wikipedia.org/wiki/Signal-to-noise_ratio
 

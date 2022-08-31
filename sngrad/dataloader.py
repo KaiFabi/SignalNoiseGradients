@@ -10,7 +10,7 @@ from torchvision.datasets import MNIST
 from torchvision.datasets import CIFAR10
 from torchvision.datasets import FashionMNIST
 
-from sngrad.utils import one_hot
+from sngrad.utils import one_hot, set_generator_seed, set_worker_seed
 
 
 def numpy_collate(batch):
@@ -24,7 +24,8 @@ def numpy_collate(batch):
 
 
 class NumpyLoader(DataLoader):
-    def __init__(self, 
+    def __init__(
+        self, 
         dataset, 
         batch_size=1,
         shuffle=True, 
@@ -34,7 +35,9 @@ class NumpyLoader(DataLoader):
         pin_memory=False, 
         drop_last=True,
         timeout=0, 
-        worker_init_fn=None):
+        worker_init_fn=None,
+        generator=None
+        ):
 
         super(self.__class__, self).__init__(
             dataset,
@@ -47,7 +50,9 @@ class NumpyLoader(DataLoader):
             pin_memory=pin_memory,
             drop_last=drop_last,
             timeout=timeout,
-            worker_init_fn=worker_init_fn)
+            worker_init_fn=worker_init_fn,
+            generator=generator
+        )
 
 
 class NormFlattenCast(object):
@@ -55,13 +60,6 @@ class NormFlattenCast(object):
         data = 2.0 * (np.array(data, dtype=jnp.float32) / 255.0) - 1.0
         return np.ravel(data)
 
-# import torchvision.transforms as transforms
-# transform = transforms.Compose([
-#     transforms.ToTensor(),
-#     transforms.Normalize((0.5, ), (0.5, )),
-#     # transforms.RandomVerticalFlip(),
-#     FlattenAndCast(),
-#     ])
 
 class DataServer:
 
@@ -88,9 +86,17 @@ class DataServer:
         else:
             raise NotImplementedError(f"Dataset {dataset} not available.")
 
+        self.generator = set_generator_seed()
+
     def get_generator(self):
         """Returns data generator."""
-        training_generator = NumpyLoader(self.train_dataset, batch_size=self.batch_size, num_workers=self.num_workers)
+        training_generator = NumpyLoader(
+            dataset=self.train_dataset, 
+            batch_size=self.batch_size, 
+            num_workers=self.num_workers,
+            worker_init_fn=set_worker_seed,
+            generator=self.generator,
+        )
         return training_generator
 
     def get_dataset(self):
