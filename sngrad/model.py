@@ -30,7 +30,7 @@ def predict(params, image):
     return logits - logsumexp(logits)
 
 
-# Make a batched version of the "predict" function using `vmap`
+# Make a batched version of the "predict" function using "vmap".
 forward = jax.vmap(predict, in_axes=(None, 0))
 
 
@@ -45,7 +45,7 @@ class Model:
         if optimizer == "sgd":
             self.update = self.update_sgd
         elif optimizer == "sng":
-            self.update = self.update_sngd
+            self.update = self.update_sng
         else:
             raise NotImplemented(f"Optimizer {optimizer} not found.")
 
@@ -88,7 +88,7 @@ class Model:
         grads = jax.grad(self._loss, argnums=0)(self.params, x, y)
         return [(w - step_size * dw, b - step_size * db) for (w, b), (dw, db) in zip(self.params, grads)]
 
-    def update_sngd(self, x, y, step_size):
+    def update_sng(self, x, y, step_size):
         """Method implements standard stochastic gradient descent with noise-adjusted gradients."""
         grads = jax.vmap(jax.grad(self._loss, argnums=0), in_axes=(None, 0, 0))(self.params, x, y)
         return [(w - step_size * self.snrgrad(dw), b - step_size * self.snrgrad(db)) 
