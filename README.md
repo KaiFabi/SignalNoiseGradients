@@ -117,7 +117,7 @@ title={signal-to-noise-gradients},
 year={2022},
 publisher = {GitHub},
 journal = {GitHub repository},
-howpublished={\url{https://github.com/KaiFabi/signal-to-noise-gradients}},
+howpublished={\url{https://github.com/KaiFabi/SignalNoiseGradients}},
 }
 ```
 
