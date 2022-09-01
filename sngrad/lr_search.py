@@ -11,36 +11,29 @@ from sngrad.model import Model
 from sngrad.utils import one_hot
 
 
-def learning_rate_search(
-    hparams: dict,
-    lr_min: float, 
-    lr_max: float,
-    num_steps: int,
-    num_epochs: int,
-    ) -> float:
+def learning_rate_search(hparams: dict) -> float:
     """Searches for best learning rate within a defined interval.
 
     Args:
         hparams: Hyperparameters.
-        lr_min: Minimal learning rate.
-        lr_max: Maximal learning rate.
-        num_steps: Steps taken within interval.
-        num_epochs: Training epochs for each step.
-        comment: Option comment for Tensorboard files.
 
     Returns:
         Returns learning rate associated with lowest test loss.
     """
 
     # Parameters
+    lr_min = hparams["lr_search"]["lr_min"]
+    lr_max = hparams["lr_search"]["lr_max"]
+    num_steps = hparams["lr_search"]["num_steps"]
+    num_epochs = hparams["lr_search"]["num_epochs"]
     num_targets = hparams["num_targets"]
+
     learning_rates = np.array(jnp.geomspace(start=lr_min, stop=lr_max, num=num_steps))
 
+
     writer = SummaryWriter(comment=f"_lr_search_{hparams['optimizer']}")
+    file = open(f"{hparams['optimizer']}_lr_search.txt", "w")
 
-    file = open(f"{hparams['optimizer']}_lr_search.txt", "a")
-
-    # List to keep track of results
     hist_test_loss = list()
 
     for learning_rate in learning_rates:
@@ -87,6 +80,6 @@ def learning_rate_search(
     file.close()
 
     idx_best_lr = np.nanargmin(hist_test_loss)
-    best_lr = learning_rates[idx_best_lr]
+    best_lr = float(learning_rates[idx_best_lr])
 
     return best_lr

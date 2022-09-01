@@ -32,7 +32,7 @@ class NumpyLoader(DataLoader):
         sampler=None,
         batch_sampler=None, 
         num_workers=0,
-        pin_memory=False, 
+        pin_memory=True, 
         drop_last=True,
         timeout=0, 
         worker_init_fn=None,

@@ -8,6 +8,7 @@ Some basic parts of the dataloader and network of this code are from the followi
 https://jax.readthedocs.io/en/latest/notebooks/Neural_Network_and_Data_Loading.html
 """
 import time
+import json
 import numpy as np
 
 import jax 
@@ -19,41 +20,19 @@ from sngrad.model import Model
 from sngrad.lr_search import learning_rate_search
 
 
-def run_experiment(optimizer: str):
+def run_experiment(hparams: dict) -> None:
     """Method runs experiments to compare standard gradients
     with signal-to-noise gradients."""
 
     set_random_seeds(seed=69)
 
-    hparams = {
-        # dataset options: mnist, fashion_mnist, cifar10
-        "dataset": "fashion_mnist",
-        "layer_sizes": [784, 512, 512, 512, 10],
-        "step_size": -1,
-        "num_epochs": 100,
-        "batch_size": 256,
-        "num_targets": 10,
-        "num_workers": 4,
-        "stats_every_num_epochs": 5,
-        # optimizer options: sgd, sng
-        "optimizer": optimizer,     
-        # device options: tpu, gpu, cpu
-        "device": "tpu",        
-    }
-
-    file = open(f"{hparams['optimizer']}_training.txt", "a")
+    file = open(f"{hparams['optimizer']}_training.txt", "w")
 
     if hparams["device"] == "cpu":
         jax.config.update('jax_platform_name', 'cpu')
 
-    if hparams["step_size"] == -1:
-        best_lr = learning_rate_search(
-            hparams=hparams,
-            lr_min=1e-3,
-            lr_max=2e+0,
-            num_steps=40, 
-            num_epochs=10, 
-            )
+    if hparams["step_size"] is None:
+        best_lr = learning_rate_search(hparams=hparams)
         print(f"best_lr = {best_lr}")
         hparams["step_size"] = best_lr
 
@@ -103,7 +82,37 @@ def run_experiment(optimizer: str):
 
 if __name__ == "__main__":
 
-    optimizers = ("sgd", "sng")
+    hparams = {
+        # dataset options: mnist, fashion_mnist, cifar10
+        "dataset": "fashion_mnist",
+        # "layer_sizes": [784, 512, 512, 512, 10],
+        "layer_sizes": [784, 32, 32, 10],
+        "lr_search": {
+            "lr_min": None,
+            "lr_max": None,
+            "num_steps": 20, 
+            "num_epochs": 2, 
+        },
+        "step_size": None,
+        "num_epochs": 20,
+        "batch_size": 128,
+        "num_targets": 10,
+        "num_workers": 2,
+        "stats_every_num_epochs": 5,
+        # optimizer options: sgd, sng
+        "optimizer": None,     
+        # device options: tpu, gpu, cpu
+        "device": "tpu",        
+    }
 
-    for optimizer in optimizers:
-        run_experiment(optimizer=optimizer)
+    print("Experiment SGD")
+    hparams.update({"optimizer": "sgd"})
+    hparams["lr_search"].update({"lr_min": 1e-2, "lr_max": 1e-0})
+    print(json.dumps(hparams, indent=4, sort_keys=True))
+    run_experiment(hparams=hparams)
+
+    print("Experiment SNG")
+    hparams.update({"optimizer": "sng"})
+    hparams["lr_search"].update({"lr_min": 1e-4, "lr_max": 1e-2})
+    print(json.dumps(hparams, indent=4, sort_keys=True))
+    run_experiment(hparams=hparams)

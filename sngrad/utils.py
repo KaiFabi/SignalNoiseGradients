@@ -21,7 +21,7 @@ def set_random_seeds(seed: int = 0) -> None:
     torch.manual_seed(seed)
 
 
-def set_worker_seed(worker_id):
+def set_worker_seed(worker_id) -> None:
     """Sets data worker seeds to preserve reproducibility.
 
     See also: https://pytorch.org/docs/stable/notes/randomness.html
@@ -31,7 +31,7 @@ def set_worker_seed(worker_id):
     random.seed(seed)
 
 
-def set_generator_seed():
+def set_generator_seed() -> torch.Generator:
     """Sets generator seed to preserve reproducibility.
 
     See also: https://pytorch.org/docs/stable/notes/randomness.html
