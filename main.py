@@ -14,7 +14,7 @@ import numpy as np
 import jax 
 from torch.utils.tensorboard import SummaryWriter
 
-from sngrad.utils import one_hot, set_random_seeds
+from sngrad.utils import one_hot, set_random_seeds, add_input_samples
 from sngrad.dataloader import DataServer
 from sngrad.model import Model
 from sngrad.lr_search import learning_rate_search
@@ -49,6 +49,8 @@ def run_experiment(hparams: dict) -> None:
 
     model = Model(hparams=hparams)
     writer = SummaryWriter(comment=f"_training_{hparams['optimizer']}")
+
+    add_input_samples(dataloader=training_generator, tag="test", writer=writer)
 
     for epoch in range(num_epochs):
 
@@ -85,16 +87,15 @@ if __name__ == "__main__":
     hparams = {
         # dataset options: mnist, fashion_mnist, cifar10
         "dataset": "fashion_mnist",
-        # "layer_sizes": [784, 512, 512, 512, 10],
-        "layer_sizes": [784, 32, 32, 10],
+        "layer_sizes": [784, 512, 512, 512, 10],
         "lr_search": {
             "lr_min": None,
             "lr_max": None,
-            "num_steps": 20, 
-            "num_epochs": 2, 
+            "num_steps": 100, 
+            "num_epochs": 1, 
         },
         "step_size": None,
-        "num_epochs": 20,
+        "num_epochs": 100,
         "batch_size": 128,
         "num_targets": 10,
         "num_workers": 2,

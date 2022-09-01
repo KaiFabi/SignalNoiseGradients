@@ -5,6 +5,10 @@ import torch
 import random
 import numpy
 
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
+
+
 def one_hot(x, k, dtype=jnp.float32):
     """Create a one-hot encoding of x of size k."""
     return jnp.array(x[:, None] == jnp.arange(k), dtype)
@@ -39,3 +43,29 @@ def set_generator_seed() -> torch.Generator:
     generator = torch.Generator()
     generator.manual_seed(0)
     return generator
+
+ 
+def add_input_samples(
+    dataloader: DataLoader, 
+    tag: str, 
+    writer: SummaryWriter, 
+    global_step: int = 0, 
+    n_samples: int = 16) -> None:
+   """Add samples from dataloader to Tensorboard.
+   Check if the input to the model is as expected.
+   Args:
+       dataloader:
+       tag:
+       writer:
+       global_step:
+       n_samples:
+   """
+   x, _ = next(iter(dataloader))
+   n_samples = min(len(x), n_samples)
+   x = x[:n_samples]
+   x_min = -1.0
+   x_max = 1.0
+   x = ((x - x_min) / (x_max - x_min))
+   x = torch.tensor(x)
+   x = x.reshape(-1, 1, 28, 28)
+   writer.add_images(tag=f"sample_batch_{tag}", img_tensor=x)
