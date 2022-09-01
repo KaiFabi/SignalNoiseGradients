@@ -6,9 +6,8 @@ from pathlib import Path
 import jax.numpy as jnp
 
 from torch.utils.data import DataLoader
-from torchvision.datasets import MNIST
-from torchvision.datasets import CIFAR10
-from torchvision.datasets import FashionMNIST
+from torchvision.datasets import CIFAR10, FashionMNIST, MNIST
+from torchvision import transforms
 
 from sngrad.utils import one_hot, set_generator_seed, set_worker_seed
 
@@ -61,6 +60,21 @@ class NormFlattenCast(object):
         return np.ravel(data)
 
 
+train_transforms = transforms.Compose([
+    transforms.ToTensor(),
+    # transforms.RandomRotation(degrees=20),
+    transforms.RandomErasing(),
+    transforms.RandomHorizontalFlip(),
+    # transforms.RandomVerticalFlip(),
+    transforms.ToPILImage(),
+    NormFlattenCast()
+    ])
+
+test_transforms = transforms.Compose([
+    NormFlattenCast(),
+])
+
+
 class DataServer:
 
     def __init__(self, hparams: dict) -> None:
@@ -75,14 +89,14 @@ class DataServer:
         # root_dir = "/tmp/" + f"{dataset}"
 
         if dataset == "cifar10":
-            self.train_dataset = CIFAR10(root=root_dir, train=True, download=True, transform=NormFlattenCast())
-            self.test_dataset = CIFAR10(root=root_dir, train=False, download=True, transform=NormFlattenCast())
+            self.train_dataset = CIFAR10(root=root_dir, train=True, download=True, transform=train_transforms)
+            self.test_dataset = CIFAR10(root=root_dir, train=False, download=True, transform=test_transforms)
         elif dataset == "fashion_mnist":
-            self.train_dataset = FashionMNIST(root=root_dir, train=True, download=True, transform=NormFlattenCast())
-            self.test_dataset = FashionMNIST(root=root_dir, train=False, download=True, transform=NormFlattenCast())
+            self.train_dataset = FashionMNIST(root=root_dir, train=True, download=True, transform=train_transforms)
+            self.test_dataset = FashionMNIST(root=root_dir, train=False, download=True, transform=test_transforms)
         elif dataset == "mnist":
-            self.train_dataset = MNIST(root=root_dir, train=True, download=True, transform=NormFlattenCast())
-            self.test_dataset = MNIST(root=root_dir, train=False, download=True, transform=NormFlattenCast())
+            self.train_dataset = MNIST(root=root_dir, train=True, download=True, transform=train_transforms)
+            self.test_dataset = MNIST(root=root_dir, train=False, download=True, transform=test_transforms)
         else:
             raise NotImplementedError(f"Dataset {dataset} not available.")
 
