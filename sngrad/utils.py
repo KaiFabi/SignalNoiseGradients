@@ -4,6 +4,7 @@ import jax.numpy as jnp
 import torch
 import random
 import numpy
+import numpy as np
 
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -52,7 +53,10 @@ def add_input_samples(
     global_step: int = 0, 
     n_samples: int = 16) -> None:
    """Add samples from dataloader to Tensorboard.
+
    Check if the input to the model is as expected.
+   Useful for debugging.
+
    Args:
        dataloader:
        tag:
@@ -61,11 +65,18 @@ def add_input_samples(
        n_samples:
    """
    x, _ = next(iter(dataloader))
+
    n_samples = min(len(x), n_samples)
    x = x[:n_samples]
-   x_min = -1.0
-   x_max = 1.0
-   x = ((x - x_min) / (x_max - x_min))
+
+   x_min = np.array(jnp.min(x))
+   x_max = np.array(jnp.max(x))
+   x = (x - x_min) / (x_max - x_min)
+
+   input_shape = dataloader.dataset.data.shape[1:]
+   x = x.reshape(-1, *input_shape)
+   x = x.transpose(0, 3, 1, 2)
+
    x = torch.tensor(x)
-   x = x.reshape(-1, 1, 28, 28)
-   writer.add_images(tag=f"sample_batch_{tag}", img_tensor=x)
+
+   writer.add_images(tag=f"sample_batch_{tag}", img_tensor=x, global_step=global_step)

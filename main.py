@@ -61,22 +61,24 @@ def run_experiment(hparams: dict) -> None:
             model.step(x, y, step_size)
 
         epoch_time = time.time() - start_time
+        writer.add_scalar("Epoch_time", epoch_time, epoch)
 
         if epoch % stats_every_num_epochs == 0:
+
             train_accuracy = model.accuracy(train_images, train_labels)
             test_accuracy = model.accuracy(test_images, test_labels)
             train_loss = model.loss(train_images, train_labels)
             test_loss = model.loss(test_images, test_labels)
+
             message = f"{epoch} {epoch_time:0.2f} {train_loss} {test_loss} {train_accuracy} {test_accuracy}"
             print(message)
             file.write(f"{message}\n")
             file.flush()
 
-        writer.add_scalar("Epoch_time", epoch_time, epoch)
-        writer.add_scalar("Accuracy/train", np.array(train_accuracy), epoch)
-        writer.add_scalar("Accuracy/test", np.array(test_accuracy), epoch)
-        writer.add_scalar("Loss/train", np.array(train_loss), epoch)
-        writer.add_scalar("Loss/test", np.array(test_loss), epoch)
+            writer.add_scalar("Accuracy/train", np.array(train_accuracy), epoch)
+            writer.add_scalar("Accuracy/test", np.array(test_accuracy), epoch)
+            writer.add_scalar("Loss/train", np.array(train_loss), epoch)
+            writer.add_scalar("Loss/test", np.array(test_loss), epoch)
 
     writer.close()
     file.close()
@@ -86,8 +88,8 @@ if __name__ == "__main__":
 
     hparams = {
         # dataset options: mnist, fashion_mnist, cifar10
-        "dataset": "fashion_mnist",
-        "layer_sizes": [784, 512, 512, 512, 10],
+        "dataset": "cifar10",
+        "layer_sizes": [3*32**2, 64, 64, 10],
         "lr_search": {
             "lr_min": None,
             "lr_max": None,
@@ -95,7 +97,7 @@ if __name__ == "__main__":
             "num_epochs": 1, 
         },
         "step_size": None,
-        "num_epochs": 100,
+        "num_epochs": 20,
         "batch_size": 512,
         "num_targets": 10,
         "num_workers": 4,
@@ -107,6 +109,8 @@ if __name__ == "__main__":
     }
 
     print("Experiment SGD")
+    hparams.update({"step_size": None})
+    hparams.update({"step_size": 0.1})
     hparams.update({"optimizer": "sgd"})
     hparams["lr_search"].update({"lr_min": 1e-2, "lr_max": 1e-0})
     print(json.dumps(hparams, indent=4, sort_keys=True))
@@ -114,7 +118,8 @@ if __name__ == "__main__":
 
     print("Experiment SNG")
     hparams.update({"step_size": None})
+    hparams.update({"step_size": 0.02})
     hparams.update({"optimizer": "sng"})
-    hparams["lr_search"].update({"lr_min": 1e-4, "lr_max": 1e-2})
+    hparams["lr_search"].update({"lr_min": 1e-3, "lr_max": 1e-1})
     print(json.dumps(hparams, indent=4, sort_keys=True))
     run_experiment(hparams=hparams)

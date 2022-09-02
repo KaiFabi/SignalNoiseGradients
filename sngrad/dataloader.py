@@ -79,26 +79,26 @@ class DataServer:
 
     def __init__(self, hparams: dict) -> None:
 
-        dataset = hparams["dataset"]
+        self.dataset = hparams["dataset"]
         self.batch_size =  hparams["batch_size"]
         self.num_targets = hparams["num_targets"]
         self.num_workers = hparams["num_workers"]
 
         home_dir = Path.home()
-        root_dir = f"{home_dir}/data/{dataset}"
+        root_dir = f"{home_dir}/data/{self.dataset}"
         # root_dir = "/tmp/" + f"{dataset}"
 
-        if dataset == "cifar10":
+        if self.dataset == "cifar10":
             self.train_dataset = CIFAR10(root=root_dir, train=True, download=True, transform=train_transforms)
             self.test_dataset = CIFAR10(root=root_dir, train=False, download=True, transform=test_transforms)
-        elif dataset == "fashion_mnist":
+        elif self.dataset == "fashion_mnist":
             self.train_dataset = FashionMNIST(root=root_dir, train=True, download=True, transform=train_transforms)
             self.test_dataset = FashionMNIST(root=root_dir, train=False, download=True, transform=test_transforms)
-        elif dataset == "mnist":
+        elif self.dataset == "mnist":
             self.train_dataset = MNIST(root=root_dir, train=True, download=True, transform=train_transforms)
             self.test_dataset = MNIST(root=root_dir, train=False, download=True, transform=test_transforms)
         else:
-            raise NotImplementedError(f"Dataset {dataset} not available.")
+            raise NotImplementedError(f"Dataset {self.dataset} not available.")
 
         self.generator = set_generator_seed()
 
@@ -115,14 +115,25 @@ class DataServer:
 
     def get_dataset(self):
         """Returns full training and test dataset."""
-        # Get the full train dataset to compute accuray
-        train_images = np.array(self.train_dataset.train_data).reshape(len(self.train_dataset.train_data), -1)
-        train_images = 2.0 * (train_images / 255.0) - 1.0
-        train_labels = one_hot(np.array(self.train_dataset.train_labels), self.num_targets)
+        if self.dataset == "cifar10":
+            # Get the full train dataset to compute accuray
+            train_images = np.array(self.train_dataset.data).reshape(len(self.train_dataset.data), -1)
+            train_images = 2.0 * (train_images / 255.0) - 1.0
+            train_labels = one_hot(np.array(self.train_dataset.targets), self.num_targets)
 
-        # Get the full test dataset to compute accuray
-        test_images = np.array(self.test_dataset.test_data).reshape(len(self.test_dataset.test_data), -1)
-        test_images = 2.0 * (test_images / 255.0) - 1.0
-        test_labels = one_hot(np.array(self.test_dataset.test_labels), self.num_targets)
+            # Get the full test dataset to compute accuray
+            test_images = np.array(self.test_dataset.data).reshape(len(self.test_dataset.data), -1)
+            test_images = 2.0 * (test_images / 255.0) - 1.0
+            test_labels = one_hot(np.array(self.test_dataset.targets), self.num_targets)
+        else:
+            # Get the full train dataset to compute accuray
+            train_images = np.array(self.train_dataset.train_data).reshape(len(self.train_dataset.train_data), -1)
+            train_images = 2.0 * (train_images / 255.0) - 1.0
+            train_labels = one_hot(np.array(self.train_dataset.train_labels), self.num_targets)
+
+            # Get the full test dataset to compute accuray
+            test_images = np.array(self.test_dataset.test_data).reshape(len(self.test_dataset.test_data), -1)
+            test_images = 2.0 * (test_images / 255.0) - 1.0
+            test_labels = one_hot(np.array(self.test_dataset.test_labels), self.num_targets)
 
         return train_images, train_labels, test_images, test_labels

@@ -30,7 +30,6 @@ def learning_rate_search(hparams: dict) -> float:
 
     learning_rates = np.array(jnp.geomspace(start=lr_min, stop=lr_max, num=num_steps))
 
-
     writer = SummaryWriter(comment=f"_lr_search_{hparams['optimizer']}")
     file = open(f"{hparams['optimizer']}_lr_search.txt", "w")
 
