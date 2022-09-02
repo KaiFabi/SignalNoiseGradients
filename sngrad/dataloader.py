@@ -115,25 +115,14 @@ class DataServer:
 
     def get_dataset(self):
         """Returns full training and test dataset."""
-        if self.dataset == "cifar10":
-            # Get the full train dataset to compute accuray
-            train_images = np.array(self.train_dataset.data).reshape(len(self.train_dataset.data), -1)
-            train_images = 2.0 * (train_images / 255.0) - 1.0
-            train_labels = one_hot(np.array(self.train_dataset.targets), self.num_targets)
+        # Get the full train dataset to compute accuray
+        train_images = np.array(self.train_dataset.data).reshape(len(self.train_dataset.data), -1)
+        train_images = 2.0 * (train_images / 255.0) - 1.0
+        train_labels = one_hot(np.array(self.train_dataset.targets), self.num_targets)
 
-            # Get the full test dataset to compute accuray
-            test_images = np.array(self.test_dataset.data).reshape(len(self.test_dataset.data), -1)
-            test_images = 2.0 * (test_images / 255.0) - 1.0
-            test_labels = one_hot(np.array(self.test_dataset.targets), self.num_targets)
-        else:
-            # Get the full train dataset to compute accuray
-            train_images = np.array(self.train_dataset.train_data).reshape(len(self.train_dataset.train_data), -1)
-            train_images = 2.0 * (train_images / 255.0) - 1.0
-            train_labels = one_hot(np.array(self.train_dataset.train_labels), self.num_targets)
-
-            # Get the full test dataset to compute accuray
-            test_images = np.array(self.test_dataset.test_data).reshape(len(self.test_dataset.test_data), -1)
-            test_images = 2.0 * (test_images / 255.0) - 1.0
-            test_labels = one_hot(np.array(self.test_dataset.test_labels), self.num_targets)
+        # Get the full test dataset to compute accuray
+        test_images = np.array(self.test_dataset.data).reshape(len(self.test_dataset.data), -1)
+        test_images = 2.0 * (test_images / 255.0) - 1.0
+        test_labels = one_hot(np.array(self.test_dataset.targets), self.num_targets)
 
         return train_images, train_labels, test_images, test_labels

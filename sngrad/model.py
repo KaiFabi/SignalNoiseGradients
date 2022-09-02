@@ -31,7 +31,7 @@ def predict(params, image):
 
 
 # Make a batched version of the "predict" function using "vmap".
-forward = jax.vmap(predict, in_axes=(None, 0))
+forward = jax.jit(jax.vmap(predict, in_axes=(None, 0)))
 
 
 class Model:
@@ -44,8 +44,10 @@ class Model:
 
         if optimizer == "sgd":
             self.update = self.update_sgd
+            self.backward = jax.jit(jax.grad(self._loss, argnums=0))
         elif optimizer == "sng":
             self.update = self.update_sng
+            self.backward = jax.jit(jax.vmap(jax.grad(self._loss, argnums=0), in_axes=(None, 0, 0)))
         else:
             raise NotImplemented(f"Optimizer {optimizer} not found.")
 
@@ -63,7 +65,7 @@ class Model:
         return scale * jax.random.normal(w_key, (n, m)), jnp.zeros(shape=(n, ))
 
     def step(self, x, y, step_size):
-        self.params = self.update(x, y, step_size)
+        self.update(x, y, step_size)
 
     def accuracy(self, images, targets):
         """Computes accuracy for provided dataset."""
@@ -85,18 +87,18 @@ class Model:
 
     def update_sgd(self, x, y, step_size):
         """Method implements standard stochastic gradient descent with accumulated gradients."""
-        grads = jax.grad(self._loss, argnums=0)(self.params, x, y)
-        return [(w - step_size * dw, b - step_size * db) for (w, b), (dw, db) in zip(self.params, grads)]
+        grads = self.backward(self.params, x, y)
+        self.params = [(w - step_size * dw, b - step_size * db) for (w, b), (dw, db) in zip(self.params, grads)]
 
     def update_sng(self, x, y, step_size):
         """Method implements standard stochastic gradient descent with noise-adjusted gradients."""
-        grads = jax.vmap(jax.grad(self._loss, argnums=0), in_axes=(None, 0, 0))(self.params, x, y)
-        return [(w - step_size * self.snrgrad(dw), b - step_size * self.snrgrad(db)) 
-                for (w, b), (dw, db) in zip(self.params, grads)]
+        grads = self.backward(self.params, x, y)
+        self.params = [(w - step_size * self._sngrad(dw), b - step_size * self._sngrad(db)) 
+                       for (w, b), (dw, db) in zip(self.params, grads)]
 
     @staticmethod
     @jax.jit
-    def snrgrad(dx, eps: float = 1e-05):
+    def _sngrad(dx, eps: float = 1e-05):
         """Performs uncertainty-based gradient adjustment."""
         # Compute mean
         dx_mean = jnp.mean(dx, axis=0)

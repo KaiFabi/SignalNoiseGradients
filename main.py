@@ -50,7 +50,7 @@ def run_experiment(hparams: dict) -> None:
     model = Model(hparams=hparams)
     writer = SummaryWriter(comment=f"_training_{hparams['optimizer']}")
 
-    add_input_samples(dataloader=training_generator, tag="test", writer=writer)
+    # add_input_samples(dataloader=training_generator, tag="test", writer=writer)
 
     for epoch in range(num_epochs):
 
@@ -88,8 +88,8 @@ if __name__ == "__main__":
 
     hparams = {
         # dataset options: mnist, fashion_mnist, cifar10
-        "dataset": "cifar10",
-        "layer_sizes": [3*32**2, 64, 64, 10],
+        "dataset": "fashion_mnist",
+        "layer_sizes": [28**2, 64, 64, 10],
         "lr_search": {
             "lr_min": None,
             "lr_max": None,
@@ -101,25 +101,24 @@ if __name__ == "__main__":
         "batch_size": 512,
         "num_targets": 10,
         "num_workers": 4,
-        "stats_every_num_epochs": 5,
+        "stats_every_num_epochs": 1,
         # optimizer options: sgd, sng
         "optimizer": None,     
         # device options: tpu, gpu, cpu
         "device": "tpu",        
     }
+    print("Experiment SNG")
+    hparams.update({"step_size": None})
+    hparams.update({"step_size": 0.02})
+    hparams.update({"optimizer": "sng"})
+    hparams["lr_search"].update({"lr_min": 1e-3, "lr_max": 1e-1})
+    print(json.dumps(hparams, indent=4, sort_keys=True))
+    run_experiment(hparams=hparams)
 
     print("Experiment SGD")
     hparams.update({"step_size": None})
     hparams.update({"step_size": 0.1})
     hparams.update({"optimizer": "sgd"})
     hparams["lr_search"].update({"lr_min": 1e-2, "lr_max": 1e-0})
-    print(json.dumps(hparams, indent=4, sort_keys=True))
-    run_experiment(hparams=hparams)
-
-    print("Experiment SNG")
-    hparams.update({"step_size": None})
-    hparams.update({"step_size": 0.02})
-    hparams.update({"optimizer": "sng"})
-    hparams["lr_search"].update({"lr_min": 1e-3, "lr_max": 1e-1})
     print(json.dumps(hparams, indent=4, sort_keys=True))
     run_experiment(hparams=hparams)
