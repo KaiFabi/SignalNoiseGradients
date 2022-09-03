@@ -22,57 +22,9 @@ def numpy_collate(batch):
         return np.array(batch)
 
 
-class NumpyLoader(DataLoader):
-    def __init__(
-        self, 
-        dataset, 
-        batch_size=1,
-        shuffle=True, 
-        sampler=None,
-        batch_sampler=None, 
-        num_workers=0,
-        pin_memory=True, 
-        drop_last=True,
-        timeout=0, 
-        worker_init_fn=None,
-        generator=None
-        ):
-
-        super(self.__class__, self).__init__(
-            dataset,
-            batch_size=batch_size,
-            shuffle=shuffle,
-            sampler=sampler,
-            batch_sampler=batch_sampler,
-            num_workers=num_workers,
-            collate_fn=numpy_collate,
-            pin_memory=pin_memory,
-            drop_last=drop_last,
-            timeout=timeout,
-            worker_init_fn=worker_init_fn,
-            generator=generator
-        )
-
-
 class NormFlattenCast(object):
     def __call__(self, data):
         return np.ravel(np.array(data, dtype=jnp.float32))
-
-
-# train_transforms = transforms.Compose([
-#     transforms.ToTensor(),
-#     # transforms.RandomRotation(degrees=20),
-#     transforms.RandomErasing(),
-#     transforms.RandomHorizontalFlip(),
-#     # transforms.RandomVerticalFlip(),
-#     transforms.ToPILImage(),
-#     NormFlattenCast()
-#     ])
-# 
-# 
-# test_transforms = transforms.Compose([
-#     NormFlattenCast(),
-# ])
 
 
 class DataServer:
@@ -89,6 +41,22 @@ class DataServer:
         # root_dir = "/tmp/" + f"{dataset}"
 
         if self.dataset == "cifar10":
+
+            mean = (0.5, 0.5, 0.5)
+            std = (0.5, 0.5, 0.5)
+
+            train_transforms = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean=mean, std=std),
+                NormFlattenCast()
+                ])
+
+            test_transforms = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean=mean, std=std),
+                NormFlattenCast(),
+            ])
+
             self.train_dataset = CIFAR10(root=root_dir, train=True, download=True, transform=train_transforms)
             self.test_dataset = CIFAR10(root=root_dir, train=False, download=True, transform=test_transforms)
 
@@ -99,52 +67,89 @@ class DataServer:
             std = float(jnp.array(self.train_dataset.data / 255.0, dtype=jnp.float32).std())
 
             train_transforms = transforms.Compose([
-                # transforms.RandomRotation(degrees=20),
                 transforms.ToTensor(),
                 transforms.RandomErasing(),
                 transforms.RandomHorizontalFlip(),
                 transforms.RandomVerticalFlip(),
+                transforms.RandomRotation(degrees=20),
                 transforms.Normalize(mean=mean, std=std),
-                # transforms.Normalize(mean=0.5, std=0.5),
-                # transforms.ToPILImage(),
                 NormFlattenCast()
                 ])
 
             test_transforms = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean=mean, std=std),
                 NormFlattenCast(),
             ])
 
             self.train_dataset = FashionMNIST(root=root_dir, train=True, download=True, transform=train_transforms)
             self.test_dataset = FashionMNIST(root=root_dir, train=False, download=True, transform=test_transforms)
+
         elif self.dataset == "mnist":
+
+            self.train_dataset = MNIST(root=root_dir, train=True, download=True)
+            mean = float(jnp.array(self.train_dataset.data / 255.0, dtype=jnp.float32).mean())
+            std = float(jnp.array(self.train_dataset.data / 255.0, dtype=jnp.float32).std())
+
+            train_transforms = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.RandomRotation(degrees=20),
+                transforms.RandomErasing(),
+                transforms.Normalize(mean=mean, std=std),
+                NormFlattenCast()
+                ])
+
+            test_transforms = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize(mean=mean, std=std),
+                NormFlattenCast(),
+            ])
+
             self.train_dataset = MNIST(root=root_dir, train=True, download=True, transform=train_transforms)
             self.test_dataset = MNIST(root=root_dir, train=False, download=True, transform=test_transforms)
+
         else:
             raise NotImplementedError(f"Dataset {self.dataset} not available.")
 
         self.generator = set_generator_seed()
 
-    def get_generator(self):
-        """Returns data generator."""
-        training_generator = NumpyLoader(
+    def get_training_dataloader(self):
+        """Returns training data generator."""
+        training_dataloader = DataLoader(
             dataset=self.train_dataset, 
-            batch_size=self.batch_size, 
+            batch_size=2 * self.batch_size, 
             num_workers=self.num_workers,
+            collate_fn=numpy_collate,
+            pin_memory=True,
+            drop_last=False,
             worker_init_fn=set_worker_seed,
             generator=self.generator,
         )
-        return training_generator
+        return training_dataloader
+
+    def get_test_dataloader(self):
+        """Returns test data generator."""
+        test_dataloader = DataLoader(
+            dataset=self.test_dataset, 
+            batch_size=2 * self.batch_size, 
+            num_workers=self.num_workers,
+            collate_fn=numpy_collate,
+            pin_memory=True,
+            drop_last=False,
+            worker_init_fn=set_worker_seed,
+            generator=self.generator,
+        )
+
+        return test_dataloader
 
     def get_dataset(self):
         """Returns full training and test dataset."""
         # Get the full train dataset to compute accuray
         train_images = np.array(self.train_dataset.data).reshape(len(self.train_dataset.data), -1)
-        train_images = 2.0 * (train_images / 255.0) - 1.0
         train_labels = one_hot(np.array(self.train_dataset.targets), self.num_targets)
 
         # Get the full test dataset to compute accuray
         test_images = np.array(self.test_dataset.data).reshape(len(self.test_dataset.data), -1)
-        test_images = 2.0 * (test_images / 255.0) - 1.0
         test_labels = one_hot(np.array(self.test_dataset.targets), self.num_targets)
 
         return train_images, train_labels, test_images, test_labels

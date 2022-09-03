@@ -83,3 +83,26 @@ def add_input_samples(
     x = torch.tensor(x)
 
     writer.add_images(tag=f"sample_batch_{tag}", img_tensor=x, global_step=global_step)
+
+
+def comp_loss_accuracy(model, data_generator):
+    """Computes loss and accuray of model."""
+
+    num_targets = len(data_generator.dataset.classes)
+
+    running_loss = 0.0
+    running_accuracy = 0.0
+    running_counter = 0.0
+
+    for images, targets in data_generator:
+        targets_one_hot = one_hot(targets, num_targets)
+        batch_loss, batch_accuracy = model.loss_accuracy(images, targets_one_hot)
+
+        running_loss = running_loss + batch_loss 
+        running_accuracy = running_accuracy + batch_accuracy
+        running_counter += len(images)
+
+    loss = running_loss / running_counter
+    accuracy = running_accuracy / running_counter
+
+    return loss, accuracy

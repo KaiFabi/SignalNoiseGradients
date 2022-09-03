@@ -41,15 +41,20 @@ class Model:
     def step(self, x, y, step_size):
         self.update(x, y, step_size)
 
-    def accuracy(self, images, targets):
-        """Computes accuracy for provided dataset."""
-        target_class = jnp.argmax(targets, axis=1)
-        predicted_class = jnp.argmax(forward(self.params, images), axis=1)
-        return float(jnp.mean(predicted_class == target_class))
+    def loss_accuracy(self, images, targets):
+        """Computes loss and accuracy."""
+        images = jnp.atleast_2d(images)
+        targets = jnp.atleast_2d(targets)
 
-    def loss(self, images, targets):
-        """Computes loss for provided dataset."""
-        return float(self._loss(self.params, images, targets))
+        preds = forward(self.params, images)
+
+        target_class = jnp.argmax(targets, axis=1)
+        predicted_class = jnp.argmax(preds, axis=1)
+
+        accuracy = float(jnp.sum(predicted_class == target_class))
+        loss = -float(jnp.sum(preds * targets))
+
+        return loss, accuracy
 
     @staticmethod
     @jax.jit
