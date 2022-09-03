@@ -50,7 +50,7 @@ def run_experiment(hparams: dict) -> None:
     model = Model(hparams=hparams)
     writer = SummaryWriter(comment=f"_training_{hparams['optimizer']}")
 
-    # add_input_samples(dataloader=training_generator, tag="test", writer=writer)
+    add_input_samples(dataloader=training_generator, tag="test", writer=writer)
 
     for epoch in range(num_epochs):
 
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     hparams = {
         # dataset options: mnist, fashion_mnist, cifar10
         "dataset": "fashion_mnist",
-        "layer_sizes": [28**2, 64, 64, 10],
+        "layer_sizes": [28**2, 32, 32, 10],
         "lr_search": {
             "lr_min": None,
             "lr_max": None,
@@ -98,7 +98,7 @@ if __name__ == "__main__":
         },
         "step_size": None,
         "num_epochs": 20,
-        "batch_size": 512,
+        "batch_size": 128,
         "num_targets": 10,
         "num_workers": 4,
         "stats_every_num_epochs": 1,
@@ -107,9 +107,10 @@ if __name__ == "__main__":
         # device options: tpu, gpu, cpu
         "device": "tpu",        
     }
+
     print("Experiment SNG")
     hparams.update({"step_size": None})
-    hparams.update({"step_size": 0.02})
+    hparams.update({"step_size": 0.01})
     hparams.update({"optimizer": "sng"})
     hparams["lr_search"].update({"lr_min": 1e-3, "lr_max": 1e-1})
     print(json.dumps(hparams, indent=4, sort_keys=True))
@@ -117,7 +118,7 @@ if __name__ == "__main__":
 
     print("Experiment SGD")
     hparams.update({"step_size": None})
-    hparams.update({"step_size": 0.1})
+    hparams.update({"step_size": 0.2})
     hparams.update({"optimizer": "sgd"})
     hparams["lr_search"].update({"lr_min": 1e-2, "lr_max": 1e-0})
     print(json.dumps(hparams, indent=4, sort_keys=True))

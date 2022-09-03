@@ -56,23 +56,23 @@ class NumpyLoader(DataLoader):
 
 class NormFlattenCast(object):
     def __call__(self, data):
-        data = 2.0 * (np.array(data, dtype=jnp.float32) / 255.0) - 1.0
-        return np.ravel(data)
+        return np.ravel(np.array(data, dtype=jnp.float32))
 
 
-train_transforms = transforms.Compose([
-    transforms.ToTensor(),
-    # transforms.RandomRotation(degrees=20),
-    transforms.RandomErasing(),
-    transforms.RandomHorizontalFlip(),
-    # transforms.RandomVerticalFlip(),
-    transforms.ToPILImage(),
-    NormFlattenCast()
-    ])
-
-test_transforms = transforms.Compose([
-    NormFlattenCast(),
-])
+# train_transforms = transforms.Compose([
+#     transforms.ToTensor(),
+#     # transforms.RandomRotation(degrees=20),
+#     transforms.RandomErasing(),
+#     transforms.RandomHorizontalFlip(),
+#     # transforms.RandomVerticalFlip(),
+#     transforms.ToPILImage(),
+#     NormFlattenCast()
+#     ])
+# 
+# 
+# test_transforms = transforms.Compose([
+#     NormFlattenCast(),
+# ])
 
 
 class DataServer:
@@ -91,7 +91,29 @@ class DataServer:
         if self.dataset == "cifar10":
             self.train_dataset = CIFAR10(root=root_dir, train=True, download=True, transform=train_transforms)
             self.test_dataset = CIFAR10(root=root_dir, train=False, download=True, transform=test_transforms)
+
         elif self.dataset == "fashion_mnist":
+
+            self.train_dataset = FashionMNIST(root=root_dir, train=True, download=True)
+            mean = float(jnp.array(self.train_dataset.data / 255.0, dtype=jnp.float32).mean())
+            std = float(jnp.array(self.train_dataset.data / 255.0, dtype=jnp.float32).std())
+
+            train_transforms = transforms.Compose([
+                # transforms.RandomRotation(degrees=20),
+                transforms.ToTensor(),
+                transforms.RandomErasing(),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
+                transforms.Normalize(mean=mean, std=std),
+                # transforms.Normalize(mean=0.5, std=0.5),
+                # transforms.ToPILImage(),
+                NormFlattenCast()
+                ])
+
+            test_transforms = transforms.Compose([
+                NormFlattenCast(),
+            ])
+
             self.train_dataset = FashionMNIST(root=root_dir, train=True, download=True, transform=train_transforms)
             self.test_dataset = FashionMNIST(root=root_dir, train=False, download=True, transform=test_transforms)
         elif self.dataset == "mnist":

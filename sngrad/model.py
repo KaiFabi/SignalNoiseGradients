@@ -8,32 +8,6 @@ import jax
 from jax.scipy.special import logsumexp
 
 
-def tanh(x):
-    return jnp.tanh(x)
-
-
-def relu(x):
-    return jnp.maximum(0, x)
-
-
-def predict(params, image):
-    """Per-example forward method."""
-    activations = image
-
-    for w, b in params[:-1]:
-        outputs = jnp.dot(w, activations) + b
-        activations = relu(outputs)
-
-    final_w, final_b = params[-1]
-    logits = jnp.dot(final_w, activations) + final_b
-
-    return logits - logsumexp(logits)
-
-
-# Make a batched version of the "predict" function using "vmap".
-forward = jax.jit(jax.vmap(predict, in_axes=(None, 0)))
-
-
 class Model:
     """Simple neural network class."""
 
@@ -99,10 +73,53 @@ class Model:
     @staticmethod
     @jax.jit
     def _sngrad(dx, eps: float = 1e-05):
-        """Performs uncertainty-based gradient adjustment."""
-        # Compute mean
+        """Performs uncertainty-based gradient adjustment.
+
+        Computes noise adjusted gradients by dividing gradients
+        by their standard deviation.
+        """
+        # Compute mean and standard deviation
+        # of per-example gradients.
         dx_mean = jnp.mean(dx, axis=0)
-        # Compute std
         dx_std = jnp.std(dx, axis=0)
-        # Compute signal to noise ratio gradients
+        # Compute signal-to-noise ratio gradients.
         return dx_mean / (dx_std + eps)
+
+    @staticmethod
+    @jax.jit
+    def _sngrad_v2(dx, eps: float = 1e-05):
+        """Performs uncertainty-based gradient adjustment.
+
+        Computes noise adjusted gradients by multiplying
+        aggregated gradients by squared signal-to-noise
+        ratio.
+        """
+        # Compute mean and standard deviation
+        # of per-example gradients.
+        dx_mean = jnp.mean(dx, axis=0)
+        dx_var = jnp.var(dx, axis=0)
+        # Compute signal-to-noise ratio gradients.
+        return dx_mean**3 / (dx_var + eps)
+
+
+def relu(x):
+    """Rectified Linear Unit activation function."""
+    return jnp.maximum(0.0, x)
+
+
+def predict(params, image):
+    """Per-example forward method."""
+    activations = image
+
+    for w, b in params[:-1]:
+        outputs = jnp.dot(w, activations) + b
+        activations = relu(outputs)
+
+    final_w, final_b = params[-1]
+    logits = jnp.dot(final_w, activations) + final_b
+
+    return logits - logsumexp(logits)
+
+
+# Make a batched version of the "predict" function using "vmap".
+forward = jax.jit(jax.vmap(predict, in_axes=(None, 0)))

@@ -52,31 +52,34 @@ def add_input_samples(
     writer: SummaryWriter, 
     global_step: int = 0, 
     n_samples: int = 16) -> None:
-   """Add samples from dataloader to Tensorboard.
+    """Add samples from dataloader to Tensorboard.
 
-   Check if the input to the model is as expected.
-   Useful for debugging.
+    Check if the input to the model is as expected.
+    Useful for debugging.
 
-   Args:
-       dataloader:
-       tag:
-       writer:
-       global_step:
-       n_samples:
-   """
-   x, _ = next(iter(dataloader))
+    Args:
+        dataloader:
+        tag:
+        writer:
+        global_step:
+        n_samples:
+    """
+    x, _ = next(iter(dataloader))
 
-   n_samples = min(len(x), n_samples)
-   x = x[:n_samples]
+    n_samples = min(len(x), n_samples)
+    x = x[:n_samples]
 
-   x_min = np.array(jnp.min(x))
-   x_max = np.array(jnp.max(x))
-   x = (x - x_min) / (x_max - x_min)
+    x_min = np.array(jnp.min(x))
+    x_max = np.array(jnp.max(x))
+    x = (x - x_min) / (x_max - x_min)
 
-   input_shape = dataloader.dataset.data.shape[1:]
-   x = x.reshape(-1, *input_shape)
-   x = x.transpose(0, 3, 1, 2)
+    input_shape = dataloader.dataset.data.shape[1:]
 
-   x = torch.tensor(x)
+    if len(input_shape) == 2:
+        input_shape += (1, )
 
-   writer.add_images(tag=f"sample_batch_{tag}", img_tensor=x, global_step=global_step)
+    x = x.reshape(-1, *input_shape)
+    x = x.transpose(0, 3, 1, 2)
+    x = torch.tensor(x)
+
+    writer.add_images(tag=f"sample_batch_{tag}", img_tensor=x, global_step=global_step)
