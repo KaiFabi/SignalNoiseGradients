@@ -8,7 +8,7 @@ import jax.numpy as jnp
 
 from sngrad.dataloader import DataServer
 from sngrad.model import Model
-from sngrad.utils import one_hot
+from sngrad.utils import one_hot, comp_loss_accuracy
 
 
 def learning_rate_search(hparams: dict) -> float:
@@ -39,8 +39,8 @@ def learning_rate_search(hparams: dict) -> float:
 
         data_server = DataServer(hparams=hparams)
 
-        training_generator = data_server.get_generator()
-        train_images, train_labels, test_images, test_labels = data_server.get_dataset()
+        training_generator = data_server.get_training_dataloader()
+        test_generator = data_server.get_training_dataloader()
 
         model = Model(hparams=hparams)
         
@@ -53,27 +53,25 @@ def learning_rate_search(hparams: dict) -> float:
 
         train_time = time.time() - start_time
 
-        train_accuracy = model.accuracy(train_images, train_labels)
-        test_accuracy = model.accuracy(test_images, test_labels)
-        train_loss = model.loss(train_images, train_labels)
-        test_loss = model.loss(test_images, test_labels)
+        training_loss, training_accuracy = comp_loss_accuracy(model=model, data_generator=training_generator)
+        test_loss, test_accuracy = comp_loss_accuracy(model=model, data_generator=test_generator)
 
         writer.add_hparams(
             hparam_dict={"lr": float(learning_rate)},
             metric_dict={
-                "hparam/train_loss": train_loss,
-                "hparam/test_loss": train_loss,
-                "hparam/train_accuracy": train_accuracy, 
+                "hparam/training_loss": training_loss,
+                "hparam/training_accuracy": training_accuracy, 
+                "hparam/test_loss": test_loss,
                 "hparam/test_accuracy": test_accuracy,
                 }
         )
 
         hist_test_loss.append(test_loss)
 
-        message = f"{train_time:0.2f} {learning_rate} {train_loss} {test_loss} {train_accuracy} {test_accuracy}"
-        print(message)
+        message = f"{train_time:0.2f} {learning_rate} {training_loss:.4f} {test_loss:.4f} {training_accuracy:.4f} {test_accuracy:.4f}"
         file.write(f"{message}\n")
         file.flush()
+        print(message)
 
     writer.close()
     file.close()
