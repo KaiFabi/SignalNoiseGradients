@@ -6,6 +6,10 @@ Consider this implementation as a proof of concept.
 
 Some basic parts of the dataloader and network of this code are from the following JAX tutorial:
 https://jax.readthedocs.io/en/latest/notebooks/Neural_Network_and_Data_Loading.html
+
+todo:
+    - Numpy dataloader really necessary. Just use pytorch dataloader.
+    - Use data generator also for test and train accuracy / loss computation.
 """
 import time
 import json
