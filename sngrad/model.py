@@ -1,7 +1,6 @@
 """Simple network class for fully connected neural networks in JAX.
 
 """
-import math
 import jax.numpy as jnp
 import jax
 
@@ -17,29 +16,33 @@ class Model:
         optimizer = hparams["optimizer"]
 
         if optimizer == "sgd":
-            self.update = self.update_sgd
+            self.update = self._update_sgd
             self.backward = jax.jit(jax.grad(self._loss, argnums=0))
         elif optimizer == "sng":
-            self.update = self.update_sng
+            self.update = self._update_sng
             self.backward = jax.jit(jax.vmap(jax.grad(self._loss, argnums=0), in_axes=(None, 0, 0)))
         else:
             raise NotImplemented(f"Optimizer {optimizer} not found.")
 
         self.params = self.init_network_params(layer_sizes, jax.random.PRNGKey(0))
+        self.grads = None
 
     def init_network_params(self, sizes, key):
         """Initialize all layers for a fully-connected neural network with sizes 'sizes'"""
         keys = jax.random.split(key, len(sizes))
-        return [self.random_layer_params(m, n, k) for m, n, k in zip(sizes[:-1], sizes[1:], keys)]
+        return [self._random_layer_params(fan_in, fan_out, key) 
+                for fan_in, fan_out, key in zip(sizes[:-1], sizes[1:], keys)]
 
-    def random_layer_params(self, m, n, key):
+    @staticmethod
+    def _random_layer_params(fan_in, fan_out, key):
         """A helper function to randomly initialize weights and biases for a dense neural network layer"""
         w_key, _ = jax.random.split(key)
-        scale = math.sqrt(2.0 / m)
-        return scale * jax.random.normal(w_key, (n, m)), jnp.zeros(shape=(n, ))
+        scale = jnp.sqrt(2.0 / fan_in)
+        return scale * jax.random.normal(w_key, (fan_out, fan_in)), jnp.zeros(shape=(fan_out, ))
 
     def step(self, x, y, step_size):
-        self.update(x, y, step_size)
+        self.comp_grads(x, y)
+        self.update(step_size)
 
     def loss_accuracy(self, images, targets):
         """Computes loss and accuracy."""
@@ -64,16 +67,28 @@ class Model:
         preds = forward(params, images)
         return -jnp.mean(preds * targets)
 
-    def update_sgd(self, x, y, step_size):
-        """Method implements standard stochastic gradient descent with accumulated gradients."""
-        grads = self.backward(self.params, x, y)
-        self.params = [(w - step_size * dw, b - step_size * db) for (w, b), (dw, db) in zip(self.params, grads)]
+    def comp_grads(self, x, y):
+        """Compute gradients."""
+        self.grads = self.backward(self.params, x, y)
 
-    def update_sng(self, x, y, step_size):
-        """Method implements standard stochastic gradient descent with noise-adjusted gradients."""
-        grads = self.backward(self.params, x, y)
+    def _update_sgd(self, step_size):
+        """Stochastic gradient descent with accumulated gradients."""
+        self.params = [(w - step_size * dw, b - step_size * db) 
+                        for (w, b), (dw, db) in zip(self.params, self.grads)]
+        # self.params = [(self._update(w, dw, step_size), self._update(b, db, step_size)) 
+        #                 for (w, b), (dw, db) in zip(self.params, self.grads)]
+
+    def _update_sng(self, step_size):
+        """Stochastic gradient descent with noise-adjusted gradients."""
         self.params = [(w - step_size * self._sngrad(dw), b - step_size * self._sngrad(db)) 
-                       for (w, b), (dw, db) in zip(self.params, grads)]
+                        for (w, b), (dw, db) in zip(self.params, self.grads)]
+        # self.params = [(self._update(w, self._sngrad(dw), step_size), self._update(b, self._sngrad(db), step_size)) 
+        #                 for (w, b), (dw, db) in zip(self.params, self.grads)]
+
+    # @staticmethod
+    # @jax.jit
+    # def _update(x, dx, eta):
+    #     return x - eta * dx
 
     @staticmethod
     @jax.jit

@@ -68,7 +68,7 @@ def learning_rate_search(hparams: dict) -> float:
 
         hist_test_loss.append(test_loss)
 
-        message = f"{train_time:0.2f} {learning_rate} {training_loss:.4f} {test_loss:.4f} {training_accuracy:.4f} {test_accuracy:.4f}"
+        message = f"{train_time:0.2f} {learning_rate:.6f} {training_loss:.4f} {test_loss:.4f} {training_accuracy:.4f} {test_accuracy:.4f}"
         file.write(f"{message}\n")
         file.flush()
         print(message)

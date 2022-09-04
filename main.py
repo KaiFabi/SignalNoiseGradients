@@ -119,3 +119,4 @@ if __name__ == "__main__":
     hparams["lr_search"].update({"lr_min": 1e-2, "lr_max": 1e-0})
     print(json.dumps(hparams, indent=4, sort_keys=True))
     run_experiment(hparams=hparams)
+
