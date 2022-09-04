@@ -63,7 +63,7 @@ def run_experiment(hparams: dict) -> None:
         epoch_time = time.time() - start_time
         writer.add_scalar("Epoch_time", epoch_time, epoch)
 
-        if epoch % stats_every_num_epochs == 0:
+        if (epoch + 1) % stats_every_num_epochs == 0:
 
             training_loss, training_accuracy = comp_loss_accuracy(model=model, data_generator=training_generator)
             test_loss, test_accuracy = comp_loss_accuracy(model=model, data_generator=test_generator)
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     hparams = {
         # dataset options: mnist, fashion_mnist, cifar10
-        "dataset": "mnist",
+        "dataset": "fashion_mnist",
         "layer_sizes": [28**2, 32, 32, 10],
         "lr_search": {
             "lr_min": None,
@@ -119,4 +119,3 @@ if __name__ == "__main__":
     hparams["lr_search"].update({"lr_min": 1e-2, "lr_max": 1e-0})
     print(json.dumps(hparams, indent=4, sort_keys=True))
     run_experiment(hparams=hparams)
-
