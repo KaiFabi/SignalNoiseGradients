@@ -135,3 +135,25 @@ def _sng_v2(dx: DeviceArray, eps: float = 1e-05):
     dx_var = jnp.var(dx, axis=0)
     # Compute signal-to-noise ratio gradients.
     return dx_mean**3 / (dx_var + eps)
+
+
+@jax.jit
+def _sng_v3(dx: DeviceArray, alpha: float = 1.0):
+    """Performs uncertainty-based gradient adjustment.
+
+    Computes noise adjusted gradients by multiplying
+    aggregated gradients by (1 - clipped(variance)).
+
+    Aggregated gradients with no variance are being
+    multiplied by 1. High aggregated gradients
+    associated with high variance are multiplied by
+    value in the range between [0, 1).
+
+    Parameter alpha allows to stronger penalize variance.
+    """
+    # Compute mean and standard deviation
+    # of per-example gradients.
+    dx_mean = jnp.mean(dx, axis=0)
+    dx_var = jnp.var(dx, axis=0)
+    # Compute signal-to-noise ratio gradients.
+    return (1.0 - jnp.clip(alpha * dx_var, a_max=1.0)) * dx_mean
