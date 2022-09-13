@@ -1,8 +1,6 @@
-# Signal-to-Noise Gradients 
+# Uncertainty-informed Stochastic Gradient Descent 
 
-**Work in progress**
-
-tl;dr: Signal-to-noise gradients allows for more careful stochastic gradient desecent by taking the batch's gradient statistics into account to compute uncertainty-adjusted gradients.
+tl;dr: This project explores uncertainty-informed stochastic gradient descent. Uncertainty-informed gradients allows for more careful stochastic gradient desecent by taking the batch's gradient statistics into account to compute uncertainty-adjusted gradients.
 
 
 ## Introduction

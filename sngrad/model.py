@@ -24,6 +24,17 @@ class Model:
         elif optimizer == "sng":
             self.update = _update_sng
             self.backward = jax.jit(jax.vmap(jax.grad(_loss, argnums=0), in_axes=(None, 0, 0)))
+
+            # grads_type = "sng_v3"
+            # if grads_type == "sng_v1":
+            #     self._sng = _sng_v1
+            # elif grads_type == "sng_v1":
+            #     self._sng = _sng_v2
+            # elif grads_type == "sng_v1":
+            #     self._sng = _sng_v3
+            # else:
+            #     raise NotImplemented(f"Gradient computation {grads_type} not found.")
+
         else:
             raise NotImplemented(f"Optimizer {optimizer} not found.")
 
@@ -72,7 +83,7 @@ def _update_sgd(params: List[Tuple[DeviceArray]], grads: List[Tuple[DeviceArray]
 @jax.jit
 def _update_sng(params: List[Tuple[DeviceArray]], grads: List[Tuple[DeviceArray]], lr: float):
     """Stochastic gradient descent with noise-adjusted gradients."""
-    return [(w - lr * _sng(dw), b - lr * _sng(db)) for (w, b), (dw, db) in zip(params, grads)]
+    return [(w - lr * _sng_v1(dw), b - lr * _sng_v1(db)) for (w, b), (dw, db) in zip(params, grads)]
 
 
 @jax.jit
@@ -107,7 +118,7 @@ forward = jax.jit(jax.vmap(predict, in_axes=(None, 0)))
 
 
 @jax.jit
-def _sng(dx: DeviceArray, eps: float = 1e-05):
+def _sng_v1(dx: DeviceArray, alpha: float = 1.0):
     """Performs uncertainty-based gradient adjustment.
 
     Computes noise adjusted gradients by dividing gradients
@@ -118,11 +129,11 @@ def _sng(dx: DeviceArray, eps: float = 1e-05):
     dx_mean = jnp.mean(dx, axis=0)
     dx_std = jnp.std(dx, axis=0)
     # Compute signal-to-noise ratio gradients.
-    return dx_mean / (dx_std + eps)
+    return dx_mean / (1.0 + alpha * dx_std)
 
 
 @jax.jit
-def _sng_v2(dx: DeviceArray, eps: float = 1e-05):
+def _sng_v2(dx: DeviceArray, alpha: float = 1.0):
     """Performs uncertainty-based gradient adjustment.
 
     Computes noise adjusted gradients by multiplying
@@ -134,7 +145,7 @@ def _sng_v2(dx: DeviceArray, eps: float = 1e-05):
     dx_mean = jnp.mean(dx, axis=0)
     dx_var = jnp.var(dx, axis=0)
     # Compute signal-to-noise ratio gradients.
-    return dx_mean**3 / (dx_var + eps)
+    return dx_mean**3 / (1.0 + alpha * dx_var)
 
 
 @jax.jit
