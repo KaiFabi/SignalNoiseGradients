@@ -1,6 +1,6 @@
 # Uncertainty-informed Stochastic Gradient Descent 
 
-tl;dr: This project explores uncertainty-informed stochastic gradient descent. Uncertainty-informed gradients allows for more careful stochastic gradient desecent by taking the batch's gradients' statistics into account to compute gradients adjusted with respect to their uncertainty.
+This project explores uncertainty-informed stochastic gradient descent. Uncertainty-informed gradients allows for more careful stochastic gradient desecent by taking the batch's gradients' statistics into account to compute gradients adjusted with respect to their uncertainty.
 
 
 ## Introduction
@@ -22,19 +22,32 @@ The method computes gradients adjusted by their corresponding uncertainty for ea
 
 Let $\frac{dL}{dw_{ij}}$ be the gradient of weight $i$ with $i = 1, \dots, N$ for batch sample $j$ with $j = 1, \dots, B$.
 
-Plain stochastic gradient descent (SGD) computes the final gradient for weight $w$ at time step $n+1$ by summing over the gradients of the entire batch and dividing by batch size $B$
+Plain stochastic gradient descent (SGD) computes the final gradient for weight $w$ at time step $n+1$ by summing over the individual gradients of the entire batch. Dividing the accumulated gradients by batch size $B$ results in the gradient signal:
 
 $$\mu_i = \frac{dL}{dw_{i}} = \text{E}[\frac{dL}{dw_{ij}}] = \frac{1}{B} \sum_{j=1}^{B} \frac{dL}{dw_{ij}}$$
 
-Instead of just averaging the gradients over the entire batch, we compute also the gradients' variance to estimate a signal-to-noise ratio (SNR) that we can use to adjust the gradients according to the uncertainty in the gradients. Thus, in addition to the average gradient above, we compute also the average gradient's variance
+Instead of reducing the gradients over the entire batch, we can also compute the gradients' variance or squared noise that we can use to adjust the gradients according to the uncertainty in the gradients. Thus, in addition to the average gradient above, we compute also the average gradient's variance
 
 $$\sigma_i^2 = \text{Var}[\frac{dL}{dw_{ij}}] = \frac{1}{B} \sum_{j=1}^{B} (\frac{dL}{dw_{ij}} - \mu_i)^2$$
 
-Now we can compute a signal-to-noise ratio for the gradient of each network weight that can than be used in the update rule. The final gradients thus becomes
+We can use the information about the gradient's noise to make adjustments to it. In the following are three suggestions for noise-informed gradients
 
-$$\frac{dL}{dw_i} = \frac{\mu_i}{\sigma_i}$$
+> Adjusted Signal-to-Noise Ratio I
+> $$\partial_{w_i} L' = \frac{\mu_i}{1 + \alpha \cdot \sigma_i}$$
 
-Thus, the final gradient $\frac{dL}{dw_i}$ is small for high variance gradients, i.e., gradients with high uncertainty. It should also be noted, that the final gradient's estimate possible becomes better for larger batch sizes.
+> Adjusted Signal-to-Noise Ratio II
+> $$\partial_{w_i} L' = \mu_i\frac{\mu_i^2}{1 + \alpha \cdot \sigma_i^2}$$
+
+> Adjusted Signal-to-Noise Ratio
+> $$\partial_{w_i} L' = (1 - \min(\alpha \cdot \sigma_i, 1)) \cdot \mu_i$$
+
+where $\alpha$ is a positive scalar hyperparameter.
+
+Gradient adjusted for their noise are small for high variance gradients, i.e., gradients with high uncertainty. From  the considerations above it follows that the final gradient's estimate should get better for larger batch sizes.
+
+These adjusted gradients can now be used for standard gradient descent
+
+$$w_i^{n+1} = w_i^n - \eta \partial_{w_i^n} L'$$
 
 
 ## Implementation
