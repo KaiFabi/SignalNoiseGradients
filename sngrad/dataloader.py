@@ -44,11 +44,15 @@ class DataServer:
         if self.dataset == "cifar10":
 
             cifar10 = CIFAR10(root=root_dir, train=True, download=True)
-            mean = jnp.mean(jnp.array(cifar10.data / 255.0, dtype=jnp.float32), axis=(0, 1, 2))
-            std = jnp.std(jnp.array(cifar10.data / 255.0, dtype=jnp.float32), axis=(0, 1, 2))
+            mean = np.array(jnp.mean(jnp.array(cifar10.data / 255.0, dtype=jnp.float32), axis=(0, 1, 2)))
+            std = np.array(jnp.std(jnp.array(cifar10.data / 255.0, dtype=jnp.float32), axis=(0, 1, 2)))
 
             train_transforms = transforms.Compose([
                 transforms.ToTensor(),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
+                transforms.RandomErasing(),
+                # transforms.RandomRotation(degrees=20),
                 transforms.Normalize(mean=mean, std=std),
                 NormFlattenCast()
                 ])

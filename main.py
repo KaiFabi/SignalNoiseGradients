@@ -91,7 +91,7 @@ if __name__ == "__main__":
     hparams = {
         # dataset options: mnist, fashion_mnist, cifar10
         "dataset": "cifar10",
-        "layer_sizes": [3*32**2, 1024, 1024, 1024, 10],
+        "layer_sizes": [3*32**2, 1024, 1024, 10],
         "lr_search": {
             "lr_min": None,
             "lr_max": None,
@@ -100,7 +100,7 @@ if __name__ == "__main__":
         },
         "step_size": None,
         "num_epochs": 200,
-        "batch_size": 256,
+        "batch_size": 128,
         "num_targets": 10,
         "num_workers": 4,
         "stats_every_num_epochs": 10,
@@ -110,16 +110,16 @@ if __name__ == "__main__":
         "device": "tpu",        
     }
 
-    print("Experiment SGD")
-    hparams.update({"step_size": 1.66})
-    hparams.update({"optimizer": "sgd"})
+    print("Experiment SNG")
+    hparams.update({"step_size": None})
+    hparams.update({"optimizer": "sng"})
     hparams["lr_search"].update({"lr_min": 0.1, "lr_max": 5.0})
     print(json.dumps(hparams, indent=4, sort_keys=True))
     run_experiment(hparams=hparams)
 
-    print("Experiment SNG")
-    hparams.update({"step_size": 2.24})
-    hparams.update({"optimizer": "sng"})
+    print("Experiment SGD")
+    hparams.update({"step_size": None})
+    hparams.update({"optimizer": "sgd"})
     hparams["lr_search"].update({"lr_min": 0.1, "lr_max": 5.0})
     print(json.dumps(hparams, indent=4, sort_keys=True))
     run_experiment(hparams=hparams)

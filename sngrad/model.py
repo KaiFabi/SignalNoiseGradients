@@ -166,7 +166,7 @@ def _sng_v2(grads: DeviceArray, alpha: float = 1.0) -> DeviceArray:
 
 
 @jax.jit
-def _sng_v3(grads: DeviceArray, alpha: float = 10.0) -> DeviceArray:
+def _sng_v3(grads: DeviceArray, alpha: float = 100.0) -> DeviceArray:
     """Performs uncertainty-based gradient adjustment.
 
     Computes noise adjusted gradients by multiplying
