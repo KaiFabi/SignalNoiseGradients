@@ -118,38 +118,50 @@ forward = jax.jit(jax.vmap(predict, in_axes=(None, 0)))
 
 
 @jax.jit
-def _sng_v1(dx: DeviceArray, alpha: float = 1.0):
+def _sng_v1(grads: DeviceArray, alpha: float = 1.0):
     """Performs uncertainty-based gradient adjustment.
 
     Computes noise adjusted gradients by dividing gradients
     by their standard deviation.
+
+    Args:
+        grads: Gradients associated with batch.
+        alpha: Multiplier controls the size of gradients.
+    
+    Returns:
+        Modified aggregated gradients.
     """
-    # Compute mean and standard deviation
-    # of per-example gradients.
-    dx_mean = jnp.mean(dx, axis=0)
-    dx_std = jnp.std(dx, axis=0)
+    # Compute mean and standard deviation of per-example gradients.
+    grads_mean = jnp.mean(grads, axis=0)
+    grads_std = jnp.std(grads, axis=0)
     # Compute signal-to-noise ratio gradients.
-    return dx_mean / (1.0 + alpha * dx_std)
+    return grads_mean / (1.0 + alpha * grads_std)
 
 
 @jax.jit
-def _sng_v2(dx: DeviceArray, alpha: float = 1.0):
+def _sng_v2(grads: DeviceArray, alpha: float = 1.0):
     """Performs uncertainty-based gradient adjustment.
 
     Computes noise adjusted gradients by multiplying
     aggregated gradients by squared signal-to-noise
     ratio.
+
+    Args:
+        grads: Gradients associated with batch.
+        alpha: Multiplier controls the size of gradients.
+    
+    Returns:
+        Modified aggregated gradients.
     """
-    # Compute mean and standard deviation
-    # of per-example gradients.
-    dx_mean = jnp.mean(dx, axis=0)
-    dx_var = jnp.var(dx, axis=0)
+    # Compute mean and standard deviation of per-example gradients.
+    grads_mean = jnp.mean(grads, axis=0)
+    grads_var = jnp.var(grads, axis=0)
     # Compute signal-to-noise ratio gradients.
-    return dx_mean**3 / (1.0 + alpha * dx_var)
+    return grads_mean**3 / (1.0 + alpha * grads_var)
 
 
 @jax.jit
-def _sng_v3(dx: DeviceArray, alpha: float = 1.0):
+def _sng_v3(grads: DeviceArray, alpha: float = 1.0):
     """Performs uncertainty-based gradient adjustment.
 
     Computes noise adjusted gradients by multiplying
@@ -161,10 +173,16 @@ def _sng_v3(dx: DeviceArray, alpha: float = 1.0):
     value in the range between [0, 1).
 
     Parameter alpha allows to stronger penalize variance.
+
+    Args:
+        grads: Gradients associated with batch.
+        alpha: Multiplier controls the size of gradients.
+    
+    Returns:
+        Modified aggregated gradients.
     """
-    # Compute mean and standard deviation
-    # of per-example gradients.
-    dx_mean = jnp.mean(dx, axis=0)
-    dx_var = jnp.var(dx, axis=0)
+    # Compute mean and standard deviation of per-example gradients.
+    grads_mean = jnp.mean(grads, axis=0)
+    grads_var = jnp.var(grads, axis=0)
     # Compute signal-to-noise ratio gradients.
-    return (1.0 - jnp.clip(alpha * dx_var, a_max=1.0)) * dx_mean
+    return (1.0 - jnp.clip(alpha * grads_var, a_max=1.0)) * grads_mean
