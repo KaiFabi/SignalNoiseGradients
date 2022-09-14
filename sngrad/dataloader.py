@@ -40,10 +40,12 @@ class DataServer:
         root_dir = f"{home_dir}/data/{self.dataset}"
         # root_dir = "/tmp/" + f"{dataset}"
 
+        print(self.dataset)
         if self.dataset == "cifar10":
 
-            mean = (0.5, 0.5, 0.5)
-            std = (0.5, 0.5, 0.5)
+            cifar10 = CIFAR10(root=root_dir, train=True, download=True)
+            mean = jnp.mean(jnp.array(cifar10.data / 255.0, dtype=jnp.float32), axis=(0, 1, 2))
+            std = jnp.std(jnp.array(cifar10.data / 255.0, dtype=jnp.float32), axis=(0, 1, 2))
 
             train_transforms = transforms.Compose([
                 transforms.ToTensor(),
@@ -62,9 +64,9 @@ class DataServer:
 
         elif self.dataset == "fashion_mnist":
 
-            self.train_dataset = FashionMNIST(root=root_dir, train=True, download=True)
-            mean = float(jnp.array(self.train_dataset.data / 255.0, dtype=jnp.float32).mean())
-            std = float(jnp.array(self.train_dataset.data / 255.0, dtype=jnp.float32).std())
+            fashion_mnist = FashionMNIST(root=root_dir, train=True, download=True)
+            mean = float(jnp.array(fashion_mnist.data / 255.0, dtype=jnp.float32).mean())
+            std = float(jnp.array(fashion_mnist.data / 255.0, dtype=jnp.float32).std())
 
             train_transforms = transforms.Compose([
                 transforms.ToTensor(),
@@ -87,9 +89,9 @@ class DataServer:
 
         elif self.dataset == "mnist":
 
-            self.train_dataset = MNIST(root=root_dir, train=True, download=True)
-            mean = float(jnp.array(self.train_dataset.data / 255.0, dtype=jnp.float32).mean())
-            std = float(jnp.array(self.train_dataset.data / 255.0, dtype=jnp.float32).std())
+            mnist = MNIST(root=root_dir, train=True, download=True)
+            mean = float(jnp.array(mnist.data / 255.0, dtype=jnp.float32).mean())
+            std = float(jnp.array(mnist.data / 255.0, dtype=jnp.float32).std())
 
             train_transforms = transforms.Compose([
                 transforms.ToTensor(),
@@ -117,7 +119,7 @@ class DataServer:
         """Returns training data generator."""
         training_dataloader = DataLoader(
             dataset=self.train_dataset, 
-            batch_size=2 * self.batch_size, 
+            batch_size=self.batch_size, 
             num_workers=self.num_workers,
             collate_fn=numpy_collate,
             pin_memory=True,
@@ -139,17 +141,14 @@ class DataServer:
             worker_init_fn=set_worker_seed,
             generator=self.generator,
         )
-
         return test_dataloader
 
-    def get_dataset(self):
-        """Returns full training and test dataset."""
-        # Get the full train dataset to compute accuray
-        train_images = np.array(self.train_dataset.data).reshape(len(self.train_dataset.data), -1)
-        train_labels = one_hot(np.array(self.train_dataset.targets), self.num_targets)
-
-        # Get the full test dataset to compute accuray
-        test_images = np.array(self.test_dataset.data).reshape(len(self.test_dataset.data), -1)
-        test_labels = one_hot(np.array(self.test_dataset.targets), self.num_targets)
-
-        return train_images, train_labels, test_images, test_labels
+    # def get_dataset(self):
+    #     """Returns full training and test dataset."""
+    #     # Get the full train dataset to compute accuray
+    #     train_images = np.array(self.train_dataset.data).reshape(len(self.train_dataset.data), -1)
+    #     train_labels = one_hot(np.array(self.train_dataset.targets), self.num_targets)
+    #     # Get the full test dataset to compute accuray
+    #     test_images = np.array(self.test_dataset.data).reshape(len(self.test_dataset.data), -1)
+    #     test_labels = one_hot(np.array(self.test_dataset.targets), self.num_targets)
+    #     return train_images, train_labels, test_images, test_labels

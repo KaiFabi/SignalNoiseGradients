@@ -24,17 +24,6 @@ class Model:
         elif optimizer == "sng":
             self.update = _update_sng
             self.backward = jax.jit(jax.vmap(jax.grad(_loss, argnums=0), in_axes=(None, 0, 0)))
-
-            # grads_type = "sng_v3"
-            # if grads_type == "sng_v1":
-            #     self._sng = _sng_v1
-            # elif grads_type == "sng_v1":
-            #     self._sng = _sng_v2
-            # elif grads_type == "sng_v1":
-            #     self._sng = _sng_v3
-            # else:
-            #     raise NotImplemented(f"Gradient computation {grads_type} not found.")
-
         else:
             raise NotImplemented(f"Optimizer {optimizer} not found.")
 
@@ -62,14 +51,15 @@ class Model:
         """Computes loss and accuracy."""
         images = jnp.atleast_2d(images)
         targets = jnp.atleast_2d(targets)
-
         preds = forward(self.params, images)
 
+        # Compute loss
+        loss = -float(jnp.sum(preds * targets))     # replace sum -> mean
+
+        # Compute accuracy
         target_class = jnp.argmax(targets, axis=1)
         predicted_class = jnp.argmax(preds, axis=1)
-
         accuracy = float(jnp.sum(predicted_class == target_class))
-        loss = -float(jnp.sum(preds * targets))
 
         return loss, accuracy
 
@@ -87,30 +77,46 @@ def _update_sng(params: List[Tuple[DeviceArray]], grads: List[Tuple[DeviceArray]
 
 
 @jax.jit
-def _loss(params: List[Tuple[DeviceArray]], images: DeviceArray, targets: DeviceArray):
+def _loss(params: List[Tuple[DeviceArray]], images: DeviceArray, targets: DeviceArray) -> DeviceArray:
+    """Compute loss"""
     images = jnp.atleast_2d(images)
     targets = jnp.atleast_2d(targets)
     preds = forward(params, images)
     return -jnp.mean(preds * targets)
 
 
-def relu(x: DeviceArray):
-    """Rectified Linear Unit activation function."""
+def relu(x: DeviceArray) -> DeviceArray:
+    """Rectified Linear Unit activation function.
+    
+    Args:
+        x: Preactivation of layer.
+
+    Returns:
+        Activations.
+    """
     return jnp.maximum(0.0, x)
 
 
-def predict(params: DeviceArray, image: DeviceArray):
-    """Per-example forward method."""
+def predict(params: DeviceArray, image: DeviceArray) -> DeviceArray:
+    """Per-example forward method.
+
+    Args:
+        params:
+        image:
+
+    Returns:
+        Prediction for single image.
+    """
     activations = image
 
     for w, b in params[:-1]:
         outputs = jnp.dot(w, activations) + b
         activations = relu(outputs)
 
-    final_w, final_b = params[-1]
-    logits = jnp.dot(final_w, activations) + final_b
+    w, b = params[-1]
+    logits = jnp.dot(w, activations) + b
 
-    return logits - logsumexp(logits)
+    return logits - logsumexp(logits)       # move this to loss function
 
 
 # Make a batched version of the "predict" function using "vmap".
@@ -118,14 +124,14 @@ forward = jax.jit(jax.vmap(predict, in_axes=(None, 0)))
 
 
 @jax.jit
-def _sng_v1(grads: DeviceArray, alpha: float = 1.0):
+def _sng_v1(grads: DeviceArray, alpha: float = 100.0) -> DeviceArray:
     """Performs uncertainty-based gradient adjustment.
 
-    Computes noise adjusted gradients by dividing gradients
-    by their standard deviation.
+    Scales aggregated gradients by factor of 1 / (1 + alpha*noise).
+    This approach scales down gradients assoicated with high uncertainty.
 
     Args:
-        grads: Gradients associated with batch.
+        grads: Gradients of a batch.
         alpha: Multiplier controls the size of gradients.
     
     Returns:
@@ -139,15 +145,14 @@ def _sng_v1(grads: DeviceArray, alpha: float = 1.0):
 
 
 @jax.jit
-def _sng_v2(grads: DeviceArray, alpha: float = 1.0):
+def _sng_v2(grads: DeviceArray, alpha: float = 1.0) -> DeviceArray:
     """Performs uncertainty-based gradient adjustment.
 
-    Computes noise adjusted gradients by multiplying
-    aggregated gradients by squared signal-to-noise
-    ratio.
+    Scales aggregated gradients by factor of grad_mean^2 / (1 + alpha*noise).
+    This approach scales down gradients assoicated with high uncertainty.
 
     Args:
-        grads: Gradients associated with batch.
+        grads: Gradients of a batch.
         alpha: Multiplier controls the size of gradients.
     
     Returns:
@@ -161,7 +166,7 @@ def _sng_v2(grads: DeviceArray, alpha: float = 1.0):
 
 
 @jax.jit
-def _sng_v3(grads: DeviceArray, alpha: float = 1.0):
+def _sng_v3(grads: DeviceArray, alpha: float = 10.0) -> DeviceArray:
     """Performs uncertainty-based gradient adjustment.
 
     Computes noise adjusted gradients by multiplying
@@ -175,7 +180,7 @@ def _sng_v3(grads: DeviceArray, alpha: float = 1.0):
     Parameter alpha allows to stronger penalize variance.
 
     Args:
-        grads: Gradients associated with batch.
+        grads: Gradients of a batch.
         alpha: Multiplier controls the size of gradients.
     
     Returns:
@@ -183,6 +188,6 @@ def _sng_v3(grads: DeviceArray, alpha: float = 1.0):
     """
     # Compute mean and standard deviation of per-example gradients.
     grads_mean = jnp.mean(grads, axis=0)
-    grads_var = jnp.var(grads, axis=0)
+    grads_std = jnp.std(grads, axis=0)
     # Compute signal-to-noise ratio gradients.
-    return (1.0 - jnp.clip(alpha * grads_var, a_max=1.0)) * grads_mean
+    return (1.0 - jnp.clip(alpha * grads_std, a_max=1.0)) * grads_mean

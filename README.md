@@ -1,6 +1,6 @@
 # Uncertainty-informed Stochastic Gradient Descent 
 
-tl;dr: This project explores uncertainty-informed stochastic gradient descent. Uncertainty-informed gradients allows for more careful stochastic gradient desecent by taking the batch's gradient statistics into account to compute uncertainty-adjusted gradients.
+tl;dr: This project explores uncertainty-informed stochastic gradient descent. Uncertainty-informed gradients allows for more careful stochastic gradient desecent by taking the batch's gradients' statistics into account to compute gradients adjusted with respect to their uncertainty.
 
 
 ## Introduction
