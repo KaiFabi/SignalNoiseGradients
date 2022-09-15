@@ -14,58 +14,54 @@ As the variance can be interpreted as a uncertainty associated with a parameter'
 
 ## Method
 
-Let $\frac{dL}{dw_{ij}}$ be the gradient of weight $i$ with $i = 1, \dots, N$ for batch sample $j$ with $j = 1, \dots, B$.
+Let $\frac{dL}{dw_i}$ (or $\partial_{w_i} L$) be the gradient of network parameter $w$ for a batch sample $i$ with $i = 1, \dots, N$.
 
-Plain stochastic gradient descent (SGD) computes the final gradient for weight $w$ at time step $n+1$ by summing over the individual gradients of the entire batch. Dividing the accumulated gradients by batch size $B$ results in the gradient signal:
+Given the gradients for parameter $w$ for each sample from a batch, summing over the individual gradients and dividing the accumulated gradients by batch size $N$ results in the gradient's signal:
 
-$$\mu_i = \frac{dL}{dw_{i}} = \text{E}[\frac{dL}{dw_{ij}}] = \frac{1}{B} \sum_{j=1}^{B} \frac{dL}{dw_{ij}}$$
+$$\mu = \frac{1}{N} \sum_{i=1}^{N} \frac{dL}{dw_i}$$
 
-Instead of reducing the gradients over the entire batch, we can also compute the gradients' variance or squared noise that we can use to adjust the gradients according to the uncertainty in the gradients. Thus, in addition to the average gradient above, we compute also the average gradient's variance
+Instead of just reducing the gradients over the entire batch, we can also compute the gradients' variance or squared noise that we can use to adjust the gradients according to their uncertainty. Thus, in addition to the average gradient above, we compute the gradient's variance as usual:
 
-$$\sigma_i^2 = \text{Var}[\frac{dL}{dw_{ij}}] = \frac{1}{B} \sum_{j=1}^{B} (\frac{dL}{dw_{ij}} - \mu_i)^2$$
+$$\sigma^2 = \frac{1}{N} \sum_{i=1}^{N} (\frac{dL}{dw_i} - \mu)^2$$
 
-We can use the information about the gradient's noise to make adjustments to it. In the following are three suggestions for noise-informed gradients
+In the following, three options are shown how information about the variance can be used for uncertainty-informed gradient adjustments.
 
-> Noise-informed gradients I
-> $$\partial_{w_i} L' = \mu_i \min(\frac{1}{\alpha \cdot \sigma_i}, 1)$$
+Noise-informed gradients I
+$$\partial_{w} L = \mu \min(\frac{1}{\alpha \cdot \sigma}, 1)$$
 
-> Noise-informed gradients II
-> $$\partial_{w_i} L' = \mu_i \min(\frac{\mu_i^2}{\alpha \cdot \sigma_i^2}, 1)$$
+Noise-informed gradients II
+$$\partial_{w} L = \mu \min(\frac{\mu^2}{\alpha \cdot \sigma^2}, 1)$$
 
-> Noise-informed gradients III
-> $$\partial_{w_i} L' = (1 - \min(\alpha \cdot \sigma_i, 1)) \cdot \mu_i$$
+Noise-informed gradients III
+$$\partial_{w} L = \mu \cdot (1 - \min(\alpha \cdot \sigma, 1))$$
 
-where $\alpha$ is a positive scalar hyperparameter. Adjusted Signal-to-Noise Ratio I+II are modified versions of the signal-to-noise ratio. In both cases, aggregated gradients are kept in case of zero variance and reduced by a factor of $\frac{1}{\alpha \cdot \sigma_i}$ and $\frac{\mu_i^2}{\alpha \cdot \sigma_i^2}$, respectively.
+Here, $\alpha$ is a positive scalar hyperparameter. Options I and II are modified versions of the signal-to-noise ratio. In all options, aggregated gradients are kept in case of zero variance or reduced by the indicated factor. These adjusted gradients can now be used for standard gradient descent
 
-In all cases, gradients adjusted for their noise are small if the variance is high. These adjusted gradients can now be used for standard gradient descent
-
-$$w_i^{n+1} = w_i^n - \eta \partial_{w_i^n} L'$$
+$$w^{n+1} = w^n - \eta \partial_{w^n} L$$
 
 
 ## Implementation
 
-I used JAX to implement the method for uncertainty-adjusted gradient computation described above. JAX allows for easy access to the gradients of each sample in the batch. In many other frameworks, such as PyTorch or TensorFlow, it is often not trivial to compute per-example gradients. These libraries often directly accumulate the gradients for each example of the batch to save memory resources.
+I used JAX to implement the uncertainty-adjusted gradient computation. JAX allows for easy access to the gradients of each sample in a batch. In other frameworks, such as PyTorch or TensorFlow, it is often not trivial to compute per-example gradients. These libraries often directly accumulate the gradients for each example of the batch to save memory resources.
 
 For more information on sample-wise gradients see also [here](https://jax.readthedocs.io/en/latest/jax-101/04-advanced-autodiff.html#per-example-gradients).
 
-Before we can compute the statistics over a batch of samples, we compute the gradients per-sample which JAX allows to do in an easy but efficient way. For this we combine *jit*, *vmap*, and *grad* transformation.
+Before we can compute the statistics over a batch of samples, we compute the gradients per-sample which JAX allows to do in an easy but efficient way. For this we combine *jit*, *vmap*, and *grad* transformation as shown in the snippet below:
 
-This implementation of uncertainty adjusted gradients used [this](https://jax.readthedocs.io/en/latest/notebooks/Neural_Network_and_Data_Loading.html) JAX tutorial as an entry point.
+```python
+self.backward = jax.jit(jax.vmap(jax.grad(_loss, argnums=0), in_axes=(None, 0, 0)))
+```
 
 
-## Experiment
+## Experiment 
 
-**Preliminary analysis**
+The following experiments compared gradient descent with uncertainty-informed gradient adjustments to vanilla SGD on a simple classification task.
 
-*Experiments have been conducted only for very small networks and datasets due to very limited computational resources.*
+To empirically evaluate the proposed method of uncertainty-adjusted gradients, I applied the method to multilayer fully connected neural networks. The networks consisted of ??? hidden layers with ??? neurons each.
 
-In the experiments I compared the method presented in this post to plain SGD and SGD with momentum on a simple classification task.
+Networks are initialized identically when compared to different optimization algorithms. The network's parameters were initialized using the method described in *Delving deep into rectifiers: Surpassing human-level performance on ImageNet classification - He, K. et al. (2015)*, using a normal distribution.
 
-To empirically evaluate the proposed method of uncertainty-adjusted gradient computation, I applied the method to multilayer fully connected neural networks. The networks consisted of three hidden layers with 1024 neurons each.
-
-The networks are initialized identically when compared to different optimization algorithms. The network's parameters were initialized using the method described in *Delving deep into rectifiers: Surpassing human-level performance on ImageNet classification - He, K. et al. (2015)*, using a normal distribution.
-
-The learning rates as well as the momentum parameter are searched over a dense grid in a case of a single hyperparameter or by applying a random search for the optimization of learning rate and momentum parameter. The reported results stem from the best set of hyper-parameters.
+The learning rates for vanilla SGD are searched over a dense grid. The reported results stem from the learning rate associated with the lowest training loss after ??? epoch.
 
 The following learning rates have been found to work best for respective optimizer:
 
@@ -74,27 +70,23 @@ The following learning rates have been found to work best for respective optimiz
 | SGD | tba |
 | SGD + sngrad | tba |
 
-The networks were trained for 200 epochs and a batch size of 128, 256, 512, and 1024.
+The networks were trained for ??? epochs and a batch size of 128, 256, 512, and 1024.
 
 
 ## Results
-
-**Preliminary analysis**
 
 The following table shows the test accuracy acieved for different datasets.
 
 | Optimizer | SGD | SGD + sngrad
 |---|:---:|:---:|
-| MNIST   | tba | tba |
-| Fashion MNIST | tba | tba |
 | CIFAR10  | tba | tba |
+| Fashion MNIST | tba | tba |
+| MNIST   | tba | tba |
 
 
 ## Discussion
 
-Although the results are from very simple examples, they look very promising and required no tweaking of parameters. It seems a bit that uncertainty adjusted gradients work just out of the box.
-
-Efficient low-level implementations of *sngrad* in popular autograd engines should be possible as there are online methods to compute mean and variance of the per-parameter per-example gradients.
+tba
 
 Of course, the method has to be applied to more advanced optimizers, larger networks, and more challenging datasets to make better statements about its potential.
 
