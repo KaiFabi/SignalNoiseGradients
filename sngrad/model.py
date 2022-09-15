@@ -144,7 +144,7 @@ def _sng_v1(grads: DeviceArray, alpha: float = 1.0, eps: float = 1e-05) -> Devic
 
 
 @jax.jit
-def _sng_v2(grads: DeviceArray, alpha: float = 0.2, eps: float = 1e-05) -> DeviceArray:
+def _sng_v2(grads: DeviceArray, alpha: float = 1.0, eps: float = 1e-05) -> DeviceArray:
     """Performs uncertainty-based gradient adjustment.
 
     Scales aggregated gradients down if assoicated with high uncertainty.

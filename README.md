@@ -1,24 +1,18 @@
 # Uncertainty-informed Stochastic Gradient Descent 
 
-This project explores uncertainty-informed stochastic gradient descent. Uncertainty-informed gradients allows for more careful stochastic gradient desecent by taking the batch's gradients' statistics into account to compute gradients adjusted with respect to their uncertainty.
-
+This project explores uncertainty-informed stochastic gradient descent using JAX by taking the batch's gradients' statistics into account to compute adaptive gradients adjusted with respect to their uncertainty.
 
 ## Introduction
 
-Standard stochastic gradient descent (SGD) accumulates the gradients for every example of a random batch to compute the per-parameter gradients that are then used to perform the gradient descent step. At the core, more advanced optimizers also use accumulated gradients which are then fed into a more sophisticated machinery to derive the final gradients used for the optimization step.
+Standard stochastic gradient descent (SGD) accumulates the (i.e., takes the sum of gradients over all examples in a batch) gradients for every example of a random batch to compute the per-parameter gradients that are then used to perform the gradient descent step. At the core, more advanced optimizers also use these accumulated gradients which are then fed into a more sophisticated machinery to derive the final gradients used for the optimization step.
 
-Accumulating the gradients (i.e., taking the sum of gradients over all examples in a batch) is an efficient way to compute approximate gradients. Most major machine learning frameworks do this by default. However, there is valuable information that is lost by the summation over all per-example gradients.
+Accumulating the gradients is an efficient way to compute approximate gradients. Most major machine learning frameworks do this by default. However, valuable information is getting lost by the summation over all per-example gradients.
 
-Per-example gradients can be used to get information about the variability of gradients for each single model parameter. Thus, per-example gradients allow us to compute the variance or uncertainty associated with every model parameter's gradients. We can use this information about the gradient's variability to adjust the final gradient by taking the gradients' uncertainty into accout.
+Per-example gradients can be used to get information about the variability of gradients for each single model parameter. Thus, per-example gradients allow us to compute the variance or uncertainty associated with every model parameter's gradients. We can use this information about the gradient's variability to adjust the final gradient by taking this uncertainty into accout.
 
-A straightforward way to adjust the gradients is by computing the signal-to-noise ration (SNR or S/N) where the average of all per-parameter gradients represent the signal and where the gradients' variance represent the noise. Computing this ratio for every gradient of every parameter has a neat effect of adjusting automatically the gradients with respect to the per-example gradients variability. High variability and thus high uncertainty reduces the gradients magnitued. On the other hand, low variability and thus low uncertainty increases the gradients magnitued. 
-
-Uncertainty adjusted gradients automatically adjust for faster descent in directions of low variance, and slower in directions associated with high variance.
-
+As the variance can be interpreted as a uncertainty associated with a parameter's gradients, the information about the gradients' variability can be used to reduces the gradients magnitude.
 
 ## Method
-
-The method computes gradients adjusted by their corresponding uncertainty for each trainable network parameter.
 
 Let $\frac{dL}{dw_{ij}}$ be the gradient of weight $i$ with $i = 1, \dots, N$ for batch sample $j$ with $j = 1, \dots, B$.
 
