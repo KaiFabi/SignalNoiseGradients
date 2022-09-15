@@ -50,9 +50,8 @@ class DataServer:
             train_transforms = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.RandomHorizontalFlip(),
-                transforms.RandomVerticalFlip(),
                 transforms.RandomErasing(),
-                # transforms.RandomRotation(degrees=20),
+                transforms.RandomRotation(degrees=20),
                 transforms.Normalize(mean=mean, std=std),
                 NormFlattenCast()
                 ])

@@ -78,8 +78,7 @@ def add_input_samples(
     if len(input_shape) == 2:
         input_shape += (1, )
 
-    x = x.reshape(-1, *input_shape)
-    x = x.transpose(0, 3, 1, 2)
+    x = x.reshape(-1, *input_shape[::-1])
     x = torch.tensor(x)
 
     writer.add_images(tag=f"sample_batch_{tag}", img_tensor=x, global_step=global_step)

@@ -33,7 +33,7 @@ def learning_rate_search(hparams: dict) -> float:
     writer = SummaryWriter(comment=f"_lr_search_{hparams['optimizer']}")
     file = open(f"{hparams['optimizer']}_lr_search.txt", "w")
 
-    hist_test_loss = list()
+    hist_loss = list()
 
     for learning_rate in learning_rates:
 
@@ -66,7 +66,7 @@ def learning_rate_search(hparams: dict) -> float:
                 }
         )
 
-        hist_test_loss.append(test_loss)
+        hist_loss.append(training_loss)
 
         message = f"{train_time:0.2f} {learning_rate:.6f} {training_loss:.4f} {test_loss:.4f} {training_accuracy:.4f} {test_accuracy:.4f}"
         file.write(f"{message}\n")
@@ -76,7 +76,7 @@ def learning_rate_search(hparams: dict) -> float:
     writer.close()
     file.close()
 
-    idx_best_lr = np.nanargmin(hist_test_loss)
+    idx_best_lr = np.nanargmin(hist_loss)
     best_lr = float(learning_rates[idx_best_lr])
 
     return best_lr

@@ -32,20 +32,18 @@ $$\sigma_i^2 = \text{Var}[\frac{dL}{dw_{ij}}] = \frac{1}{B} \sum_{j=1}^{B} (\fra
 
 We can use the information about the gradient's noise to make adjustments to it. In the following are three suggestions for noise-informed gradients
 
-> Adjusted Signal-to-Noise Ratio I
-> $$\partial_{w_i} L' = \frac{\mu_i}{1 + \alpha \cdot \sigma_i}$$
+> Noise-informed gradients I
+> $$\partial_{w_i} L' = \mu_i \min(\frac{1}{\alpha \cdot \sigma_i}, 1)$$
 
-> Adjusted Signal-to-Noise Ratio II
-> $$\partial_{w_i} L' = \mu_i\frac{\mu_i^2}{1 + \alpha \cdot \sigma_i^2}$$
+> Noise-informed gradients II
+> $$\partial_{w_i} L' = \mu_i \min(\frac{\mu_i^2}{\alpha \cdot \sigma_i^2}, 1)$$
 
-> Adjusted Signal-to-Noise Ratio
+> Noise-informed gradients III
 > $$\partial_{w_i} L' = (1 - \min(\alpha \cdot \sigma_i, 1)) \cdot \mu_i$$
 
-where $\alpha$ is a positive scalar hyperparameter.
+where $\alpha$ is a positive scalar hyperparameter. Adjusted Signal-to-Noise Ratio I+II are modified versions of the signal-to-noise ratio. In both cases, aggregated gradients are kept in case of zero variance and reduced by a factor of $\frac{1}{\alpha \cdot \sigma_i}$ and $\frac{\mu_i^2}{\alpha \cdot \sigma_i^2}$, respectively.
 
-Gradient adjusted for their noise are small for high variance gradients, i.e., gradients with high uncertainty. From  the considerations above it follows that the final gradient's estimate should get better for larger batch sizes.
-
-These adjusted gradients can now be used for standard gradient descent
+In all cases, gradients adjusted for their noise are small if the variance is high. These adjusted gradients can now be used for standard gradient descent
 
 $$w_i^{n+1} = w_i^n - \eta \partial_{w_i^n} L'$$
 
@@ -111,9 +109,12 @@ Of course, the method has to be applied to more advanced optimizers, larger netw
 
 I used [this](https://jax.readthedocs.io/en/latest/notebooks/Neural_Network_and_Data_Loading.html) tutorial to get started in building basic neural networks with JAX while developing *sngrad*. 
 
+
 ## TODOs
 
 - According to Wikipedia, $\mu / \sigma$ is just an approximation and only valid for non-negative variables. Alternatively one can use $\mu^2 / \sigma^2$ as an adaptive multiplier leading to $\frac{\mu^2}{\sigma^2}\mu = \frac{\mu^3}{\sigma^2}$ as final gradients? https://en.wikipedia.org/wiki/Signal-to-noise_ratio
+- Plot noise and signal-to-noise ratio of gradients.
+- Check if gradient noise gets better for larger batch sizes.
 
 
 ## Citation
