@@ -30,6 +30,9 @@ class Model:
         self.params = self.init_network_params(layer_sizes, jax.random.PRNGKey(0))
         self.grads = None
 
+        self.grads_signal = None
+        self.grads_noise = None
+
     def init_network_params(self, sizes: list, key: DeviceArray):
         """Initialize all layers for a fully-connected neural network with sizes 'sizes'"""
         keys = jax.random.split(key, len(sizes))
@@ -73,7 +76,7 @@ def _update_sgd(params: List[Tuple[DeviceArray]], grads: List[Tuple[DeviceArray]
 @jax.jit
 def _update_sng(params: List[Tuple[DeviceArray]], grads: List[Tuple[DeviceArray]], lr: float):
     """Stochastic gradient descent with noise-adjusted gradients."""
-    return [(w - lr * _sng_v2(dw), b - lr * _sng_v2(db)) for (w, b), (dw, db) in zip(params, grads)]
+    return [(w - lr * _sng_v3(dw), b - lr * _sng_v3(db)) for (w, b), (dw, db) in zip(params, grads)]
 
 
 @jax.jit
@@ -124,7 +127,7 @@ forward = jax.jit(jax.vmap(predict, in_axes=(None, 0)))
 
 
 @jax.jit
-def _sng_v1(grads: DeviceArray, alpha: float = 1.0, eps: float = 1e-05) -> DeviceArray:
+def _sng_v1(grads: DeviceArray, alpha: float = 30.0, eps: float = 1e-05) -> DeviceArray:
     """Performs uncertainty-based gradient adjustment.
 
     Scales aggregated gradients down if assoicated with high uncertainty.
@@ -144,7 +147,7 @@ def _sng_v1(grads: DeviceArray, alpha: float = 1.0, eps: float = 1e-05) -> Devic
 
 
 @jax.jit
-def _sng_v2(grads: DeviceArray, alpha: float = 1.0, eps: float = 1e-05) -> DeviceArray:
+def _sng_v2(grads: DeviceArray, alpha: float = 0.05, eps: float = 1e-05) -> DeviceArray:
     """Performs uncertainty-based gradient adjustment.
 
     Scales aggregated gradients down if assoicated with high uncertainty.
