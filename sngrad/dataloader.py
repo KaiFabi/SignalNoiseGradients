@@ -38,7 +38,6 @@ class DataServer:
 
         home_dir = Path.home()
         root_dir = f"{home_dir}/data/{self.dataset}"
-        # root_dir = "/tmp/" + f"{dataset}"
 
         print(self.dataset)
         if self.dataset == "cifar10":
@@ -145,13 +144,3 @@ class DataServer:
             generator=self.generator,
         )
         return test_dataloader
-
-    # def get_dataset(self):
-    #     """Returns full training and test dataset."""
-    #     # Get the full train dataset to compute accuray
-    #     train_images = np.array(self.train_dataset.data).reshape(len(self.train_dataset.data), -1)
-    #     train_labels = one_hot(np.array(self.train_dataset.targets), self.num_targets)
-    #     # Get the full test dataset to compute accuray
-    #     test_images = np.array(self.test_dataset.data).reshape(len(self.test_dataset.data), -1)
-    #     test_labels = one_hot(np.array(self.test_dataset.targets), self.num_targets)
-    #     return train_images, train_labels, test_images, test_labels

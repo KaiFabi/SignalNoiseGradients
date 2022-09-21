@@ -78,10 +78,6 @@ def run_experiment(hparams: dict) -> None:
             file.flush()
             print(message)
 
-        # Simple learning rate scheduler
-        if (epoch + 1) % 80 == 0:
-            step_size *= 0.5
-
     writer.close()
     file.close()
 
@@ -111,15 +107,13 @@ if __name__ == "__main__":
     }
 
     print("Experiment SGD")
-    hparams.update({"step_size": 0.60833})
     hparams.update({"optimizer": "sgd"})
-    hparams["lr_search"].update({"lr_min": 0.1, "lr_max": 4.0})
+    hparams["lr_search"].update({"lr_min": 0.5, "lr_max": 2.0})
     print(json.dumps(hparams, indent=4, sort_keys=True))
     run_experiment(hparams=hparams)
 
     print("Experiment SNG")
-    hparams.update({"step_size": 0.60833})
     hparams.update({"optimizer": "sng"})
-    hparams["lr_search"].update({"lr_min": 0.1, "lr_max": 4.0})
+    hparams["lr_search"].update({"lr_min": 0.5, "lr_max": 2.0})
     print(json.dumps(hparams, indent=4, sort_keys=True))
     run_experiment(hparams=hparams)
